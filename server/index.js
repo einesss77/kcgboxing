@@ -112,7 +112,7 @@ const sendOrderEmail = async (items, customer) => {
 
         const jsonAttachment = {
             filename: `commande-${customer.name?.replace(/\s+/g, '-').toLowerCase() || 'client'}.json`,
-            content: JSON.stringify({ items }, null, 2),
+            content: JSON.stringify(items, null, 2),
             contentType: 'application/json',
         };
 
