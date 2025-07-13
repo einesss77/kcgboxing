@@ -110,11 +110,18 @@ const sendOrderEmail = async (items, customer) => {
             </ul>
         `;
 
+        const jsonAttachment = {
+            filename: `commande-${customer.name?.replace(/\s+/g, '-').toLowerCase() || 'client'}.json`,
+            content: JSON.stringify({ items }, null, 2),
+            contentType: 'application/json',
+        };
+
         const info = await transporter.sendMail({
             from: '"Boutique Gants" <einesbek@gmail.com>',
             to: 'einesbek@gmail.com',
             subject: 'Nouvelle commande sur ton site',
             html,
+            attachments: [jsonAttachment],
         });
 
         console.log("✅ Email envoyé :", info.messageId);
