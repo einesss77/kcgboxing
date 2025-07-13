@@ -11,7 +11,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2022-11-15',
 });
 
-app.use(cors({ origin: 'http://localhost:5175' }));
+app.use(cors({ origin: process.env.FRONTEND_URL }));
 app.use(express.json());
 
 app.post('/create-checkout-session', async (req, res) => {
@@ -34,8 +34,8 @@ app.post('/create-checkout-session', async (req, res) => {
                 quantity: item.quantity,
             })),
 
-            success_url: 'http://localhost:5175/success',
-            cancel_url: 'http://localhost:5173/cart',
+            success_url: `${process.env.FRONTEND_URL}/success`,
+            cancel_url: `${process.env.FRONTEND_URL}/cart`,
         });
         await sendOrderEmail(items);
 
