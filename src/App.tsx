@@ -9,7 +9,7 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import SuccessPage from './pages/SuccessPage';
 import OrderJsonLoader from "./pages/src/pages/OrderViewer.tsx";
-
+import AdminOrdersPage from "./pages/AdminOrdersPage.tsx";
 
 function App() {
   return (
@@ -25,6 +25,7 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/load-json" element={<OrderJsonLoader />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/admin/orders" element={<AdminOrdersPage />} />
           </Routes>
         </main>
         <Footer />

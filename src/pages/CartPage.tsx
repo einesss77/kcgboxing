@@ -3,9 +3,18 @@ import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom'; // en haut de ton fichier
 import { useCartStore } from '../store/cartStore';
 import { X, MinusCircle, PlusCircle, ShoppingBag, ArrowLeft } from 'lucide-react';
+import {useState} from "react";
 
 const CartPage: React.FC = () => {
   const { items, removeFromCart, updateQuantity, getTotalPrice } = useCartStore();
+  const isFormValid = () => {
+    return (
+        customerInfo.name.trim() &&
+        customerInfo.email.trim() &&
+        customerInfo.phone.trim() &&
+        customerInfo.address.trim()
+    );
+  };
 
   if (items.length === 0) {
     return (
@@ -26,28 +35,56 @@ const CartPage: React.FC = () => {
       </div>
     );
   }
+  const [customerInfo, setCustomerInfo] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
+  });
+
   const navigate = useNavigate();
   const handleCheckout = async () => {
     try {
+      // 1. Générer le JSON à envoyer par mail
+      const customerData = {
+        customer: customerInfo,
+        order: items.map((item) => ({
+          name: "Custom Boxing Gloves", // ou item.name si dispo
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        total: getTotalPrice(),
+      };
+
+      // 2. L’envoyer au backend pour l’envoi de mail
+      await fetch(`${import.meta.env.VITE_API_URL}/send-order-mail`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(customerData),
+      });
+      console.log("🧾 Infos client envoyées :", customerInfo);
+
+      // 3. Créer la session Stripe
       const res = await fetch(`${import.meta.env.VITE_API_URL}/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ items, customer: customerInfo }),
       });
 
       const data = await res.json();
       if (data?.url) {
-        // Stocker les données localement avant de partir (pour les retrouver après redirection)
         sessionStorage.setItem('orderData', JSON.stringify(items));
         window.location.href = data.url;
       } else {
         alert("Erreur lors de la création de la session de paiement.");
       }
+
     } catch (err) {
       console.error("Erreur checkout :", err);
       alert("Impossible de procéder au paiement.");
     }
   };
+
 
 
 
@@ -204,10 +241,44 @@ const CartPage: React.FC = () => {
                 <span>${Number(getTotalPrice() || 0).toFixed(2)}</span>
               </div>
             </div>
+            <div className="space-y-4 mb-6">
+              <h3 className="text-lg font-semibold text-white">Informations client</h3>
+              <input
+                  type="text"
+                  placeholder="Nom complet"
+                  value={customerInfo.name}
+                  onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
+                  className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
+              />
+              <input
+                  type="email"
+                  placeholder="Email"
+                  value={customerInfo.email}
+                  onChange={(e) => setCustomerInfo({...customerInfo, email: e.target.value})}
+                  className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
+              />
+              <input
+                  type="tel"
+                  placeholder="Téléphone"
+                  value={customerInfo.phone}
+                  onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
+                  className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
+              />
+              <input
+                  type="text"
+                  placeholder="Adresse de livraison"
+                  value={customerInfo.address}
+                  onChange={(e) => setCustomerInfo({...customerInfo, address: e.target.value})}
+                  className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
+              />
+            </div>
 
             <button
-                className="btn btn-primary w-full py-3"
+                className={`btn btn-primary w-full py-3 ${
+                    !isFormValid() ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
                 onClick={handleCheckout}
+                disabled={!isFormValid()}
             >
               Proceed to Checkout
             </button>
