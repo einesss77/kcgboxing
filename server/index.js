@@ -65,7 +65,8 @@ app.listen(4242, () => {
 
 const sendOrderEmail = async (items, customer) => {
     try {
-        console.log("📦 Contenu de customer :", customer); // 👈 LOG ICI
+        console.log("📦 Contenu de customer :", customer);
+
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
@@ -116,12 +117,14 @@ const sendOrderEmail = async (items, customer) => {
             contentType: 'application/json',
         };
 
+        const imageAttachments = await getImageAttachmentsFromItems(items);
+
         const info = await transporter.sendMail({
             from: '"Boutique Gants" <einesbek@gmail.com>',
-            to: 'einesbek@gmail.com',
+            to: ['einesbek@gmail.com', 'kcgboxing@gmail.com'],
             subject: 'Nouvelle commande sur ton site',
             html,
-            attachments: [jsonAttachment],
+            attachments: [jsonAttachment, ...imageAttachments],
         });
 
         console.log("✅ Email envoyé :", info.messageId);
@@ -129,6 +132,7 @@ const sendOrderEmail = async (items, customer) => {
         console.error("❌ Erreur envoi e-mail :", error);
     }
 };
+
 app.post('/save-order', async (req, res) => {
     try {
         const { customer, items } = req.body;
@@ -170,4 +174,27 @@ app.get('/admin/orders', async (req, res) => {
         res.status(500).json({ error: 'Erreur lors de la récupération des commandes.' });
     }
 });
+
+const getImageAttachmentsFromItems = async (items) => {
+    const attachments = [];
+
+    items.forEach((item, index) => {
+        const customImages = item.customImages;
+
+        if (customImages) {
+            for (const zone in customImages) {
+                customImages[zone].forEach((image, i) => {
+                    attachments.push({
+                        filename: `image-${index}-${zone}-${i}.png`,
+                        path: image.url,
+                        cid: `image-${index}-${zone}-${i}`, // optionnel, si tu veux les afficher dans le HTML un jour
+                    });
+                });
+            }
+        }
+    });
+
+    return attachments;
+};
+
 

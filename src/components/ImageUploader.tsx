@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useCustomizationStore } from '../../store/customizationStore';
+import { uploadToCloudinary} from "../utils/cloudinary.ts";
 import { Image as ImageIcon, X, Move, RotateCw, Maximize } from 'lucide-react';
 import type { Zone, ImageTransform } from '../../store/customizationStore';
 
@@ -13,7 +14,7 @@ const ZONE_LABELS: Record<AvailableZone, string> = {
 };
 
 export default function ImageUploader() {
-  const { updateCustomImage, updateImageTransform, customImages } = useCustomizationStore();
+  const { updateCustomImage, addCustomImage, updateImageTransform, customImages } = useCustomizationStore();
   const [selectedZone, setSelectedZone] = useState<AvailableZone>('OutterPalm');
   const [isDragging, setIsDragging] = useState(false);
  
@@ -33,15 +34,15 @@ export default function ImageUploader() {
     processFile(file);
   };
 
-  const processFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        updateCustomImage(selectedZone, reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
+  const processFile = async (file: File) => {
+    const url = await uploadToCloudinary(file);
+    if (url) {
+      addCustomImage(selectedZone, url); // on utilise maintenant la vraie URL
+    } else {
+      console.error("Échec de l'upload vers Cloudinary");
+    }
   };
+
 
   const handleClearImage = () => {
     updateCustomImage(selectedZone, '');
