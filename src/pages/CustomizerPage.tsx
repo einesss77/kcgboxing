@@ -29,7 +29,14 @@ export default function CustomizerPage() {
       },
       size: glove.size,
       texts: textZones,
-      images: customImages,
+      images: customImages.map(img => ({
+  url: img.url,
+  zone: img.zone,
+  x: img.x,
+  y: img.y,
+  scale: img.scale,
+  rotation: img.rotation,
+}))
     };
 
     try {
@@ -69,7 +76,14 @@ export default function CustomizerPage() {
         material: glove.material || { name: 'Standard', description: 'Default Material', price: 0 },
       },
       textZones,
-      customImages,
+      customImages: customImages.map(img => ({
+  url: img.url,
+  zone: img.zone,
+  x: img.x,
+  y: img.y,
+  scale: img.scale,
+  rotation: img.rotation,
+})),
       price: Number(calculatePrice()),
       quantity: 1,
     };
