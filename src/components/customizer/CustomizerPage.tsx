@@ -120,14 +120,14 @@ export default function CustomizerPage() {
             onClick={handleAddToCart}
             className="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-lg font-bold text-lg transition"
           >
-            Ajouter au panier
+            Add to cart
           </button>
 
           <button 
             onClick={handleBuy}
             className="w-full bg-green-600 hover:bg-green-500 text-white py-3 rounded-lg font-bold text-lg transition"
           >
-            Commander maintenant
+            Order Now
           </button>
         </div>
       </div>
