@@ -37,22 +37,37 @@ export async function generateTextTexture({
   ctx.restore();
 
   // Images
-  for (const image of images) {
-    const img = await loadImage(image.url);
-    const { x = 0, y = 0, scale = 1, rotation = 0 } = image.transform ?? {};
-   ctx.save();
-ctx.translate(x, y);
-ctx.rotate((rotation * Math.PI) / 180);
-ctx.drawImage(
-  img,
-  -(img.width * scale) / 2,
-  -(img.height * scale) / 2,
-  img.width * scale,
-  img.height * scale
-);
-   ctx.restore();
-  }
+for (const image of images) {
+  const img = await loadImage(image.url);
+  const {
+    x = 0.5,           // valeurs entre 0 et 1 (par défaut centré)
+    y = 0.5,
+    scale = 1,
+    rotation = 0,
+  } = image.transform ?? {};
 
+  ctx.save();
+
+  // Position en pixels
+  const posX = x * canvas.width;
+  const posY = y * canvas.height;
+
+  ctx.translate(posX, posY);
+  ctx.rotate((rotation * Math.PI) / 180);
+
+  const imgWidth = img.width * scale;
+  const imgHeight = img.height * scale;
+
+  ctx.drawImage(
+    img,
+    -imgWidth / 2,
+    -imgHeight / 2,
+    imgWidth,
+    imgHeight
+  );
+
+  ctx.restore();
+}
   // Text
   if (text) {
     ctx.save();
