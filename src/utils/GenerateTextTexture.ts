@@ -41,7 +41,7 @@ export async function generateTextTexture({
     const img = await loadImage(image.url);
     const { x = 0, y = 0, scale = 1, rotation = 0 } = image.transform ?? {};
     ctx.save();
-    ctx.translate(x + 256, y + 256);
+    ctx.translate(x, y);
     ctx.rotate((rotation * Math.PI) / 180);
     ctx.scale(scale, scale);
     ctx.drawImage(img, -img.width / 2, -img.height / 2);
