@@ -290,7 +290,7 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
     });
   },
 
- addCustomImage: (zone, url, id?: string, transform?: ImageTransform) => {
+addCustomImage: (zone, url, id = uuidv4(), transform = { x: 0.5, y: 0.5, scale: 1, rotation: 0 }) => {
   const newImage: CustomImage = {
     id: id || uuidv4(),
     url,
