@@ -94,7 +94,7 @@ interface CustomizationState {
   updateColor: (part: string, color: GloveColor) => void;
   updateSize: (size: string) => void;
   updateTextZone: (zone: Zone, updates: Partial<TextSettings>) => void;
-  addCustomImage: (zone: Zone, url: string) => void;
+  addCustomImage: (zone: Zone, url: string, id?: string, transform?: ImageTransform) => void;
   removeCustomImage: (zone: Zone, imageId: string) => void;
   updateImageTransform: (zone: Zone, imageId: string, transform: ImageTransform) => void;
   resetCustomization: () => void;
