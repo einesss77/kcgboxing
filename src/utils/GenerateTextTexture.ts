@@ -48,8 +48,8 @@ for (const image of images) {
 
   ctx.save();
 
-  const px = x * canvas.width;     // 👈 conversion en pixels
-  const py = y * canvas.height;
+const px = x;    // Position en pixels direct (ex : 121px, 125px)
+const py = y;
 
   ctx.translate(px, py);
   ctx.rotate((rotation * Math.PI) / 180);
