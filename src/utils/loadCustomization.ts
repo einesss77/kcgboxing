@@ -32,10 +32,9 @@ export function loadCustomizationFromJson(
     });
 
     // Images personnalisées
-    Object.entries(customImages).forEach(([zone, images]) => {
-        images.forEach((image) => {
-            addCustomImage(zone as Zone, image.url);
-            updateImageTransform(zone as Zone, image.id, image.transform);
-        });
+Object.entries(customImages).forEach(([zone, images]) => {
+    images.forEach((image) => {
+        addCustomImage(zone as Zone, image.url, image.id, image.transform);
     });
+});
 }
