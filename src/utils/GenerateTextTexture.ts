@@ -54,7 +54,7 @@ for (const image of images) {
 
   const imgWidth = img.width * scale;
   const imgHeight = img.height * scale;
-
+console.log('DRAW IMAGE', { x, y, scale, rotation, imgWidth, imgHeight });
   ctx.drawImage(
     img,
     -imgWidth / 2,
