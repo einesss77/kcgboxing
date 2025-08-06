@@ -41,11 +41,15 @@ export async function generateTextTexture({
     const img = await loadImage(image.url);
     const { x = 0, y = 0, scale = 1, rotation = 0 } = image.transform ?? {};
    ctx.save();
-   ctx.translate(x, y); // 👈 NE TOUCHE PAS à x/y du JSON
-   ctx.translate(img.width / 2, img.height / 2); // recentrage pour rotation/scale
-   ctx.rotate((rotation * Math.PI) / 180);
-   ctx.scale(scale, scale);
-   ctx.drawImage(img, -img.width / 2, -img.height / 2);
+ctx.translate(x, y);
+ctx.rotate((rotation * Math.PI) / 180);
+ctx.drawImage(
+  img,
+  -(img.width * scale) / 2,
+  -(img.height * scale) / 2,
+  img.width * scale,
+  img.height * scale
+);
    ctx.restore();
   }
 
