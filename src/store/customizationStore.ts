@@ -290,27 +290,26 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
     });
   },
 
-  addCustomImage: (zone, url) => {
-    const newImage = {
-      id: uuidv4(),
-      url,
-      transform: { ...defaultImageTransform }
+ addCustomImage: (zone, url, id?: string, transform?: ImageTransform) => {
+  const newImage: CustomImage = {
+    id: id || uuidv4(),
+    url,
+    transform: transform || { ...defaultImageTransform },
+  };
+
+  set((state) => {
+    const updatedImages = {
+      ...state.customImages,
+      [zone]: [...state.customImages[zone], newImage],
     };
 
-    set((state) => {
-      const updatedImages = {
-        ...state.customImages,
-        [zone]: [...state.customImages[zone], newImage]
-      };
+    if (zone === 'Strap') {
+      updatedImages.WristOutline = [...state.customImages.WristOutline, newImage];
+    }
 
-      if (zone === 'Strap') {
-        updatedImages.WristOutline = [...state.customImages.WristOutline, newImage];
-      }
-
-      return { customImages: updatedImages };
-    });
-  },
-
+    return { customImages: updatedImages };
+  });
+},
   removeCustomImage: (zone, imageId) => {
     set((state) => {
       const updatedImages = {
