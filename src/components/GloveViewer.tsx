@@ -102,14 +102,16 @@ function GloveViewer() {
 
         const zone = name as keyof typeof textZones;
         const hasText = textZones[zone]?.text;
-        const images = customImages[zone] ?? [];
-
-        images.forEach(image => {
-  if (image.x === undefined) image.x = 0;
-  if (image.y === undefined) image.y = 0;
-  if (image.scale === undefined) image.scale = 1;
-  if (image.rotation === undefined) image.rotation = 0;
-});
+        const rawImages = customImages[zone] ?? [];
+        const images = rawImages.map(img => ({
+  ...img,
+  transform: {
+    x: img.transform?.x ?? 0,
+    y: img.transform?.y ?? 0,
+    scale: img.transform?.scale ?? 1,
+    rotation: img.transform?.rotation ?? 0
+  }
+}));
         if (hasText || images.length > 0) {
           const texture = await generateTextTexture({
             text: textZones[zone]?.text || '',
