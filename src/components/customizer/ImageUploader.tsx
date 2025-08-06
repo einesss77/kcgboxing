@@ -37,7 +37,13 @@ export default function ImageUploader() {
   const processFile = async (file: File) => {
     const url = await uploadToCloudinary(file);
     if (url) {
-      addCustomImage(selectedZone, url); // on utilise maintenant la vraie URL
+      addCustomImage(selectedZone, url, {
+  x: 0,
+  y: 0,
+  scale: 1,
+  rotation: 0
+}); 
+      // on utilise maintenant la vraie URL
     } else {
       console.error("Échec de l'upload vers Cloudinary");
     }
