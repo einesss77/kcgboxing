@@ -48,7 +48,7 @@ for (const image of images) {
 
   ctx.save();
 
-  // UTILISER x et y DIRECTEMENT
+  // UTILISER x et y DIRECTEMENT, PAS de multiplication par canvas.width
   ctx.translate(x, y);
   ctx.rotate((rotation * Math.PI) / 180);
 
@@ -65,6 +65,7 @@ for (const image of images) {
 
   ctx.restore();
 }
+
 
   // Text
   if (text) {
