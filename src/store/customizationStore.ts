@@ -25,20 +25,27 @@ export interface GloveTrim {
   price: number;
 }
 
+export interface ImageTransform {
+  x: number;
+  y: number;
+  scale: number;
+  rotation: number;
+}
+
 export interface CustomImage {
   id: string;
   url: string;
   transform: ImageTransform;
 }
 
-export type Zone = 
-  | 'Wrist'
-  | 'InnerThumb'
-  | 'OutterThumb'
-  | 'InnerPalm'
-  | 'OutterPalm'
-  | 'Strap'
-  | 'WristOutline';
+export type Zone =
+    | 'Wrist'
+    | 'InnerThumb'
+    | 'OutterThumb'
+    | 'InnerPalm'
+    | 'OutterPalm'
+    | 'Strap'
+    | 'WristOutline';
 
 export interface TextSettings {
   text: string;
@@ -48,13 +55,6 @@ export interface TextSettings {
   rotation: number;
   x: number;
   y: number;
-}
-
-export interface ImageTransform {
-  x: number;
-  y: number;
-  scale: number;
-  rotation: number;
 }
 
 export interface CustomGlove {
@@ -91,12 +91,21 @@ interface CustomizationState {
   glove: CustomGlove;
   textZones: Record<Zone, TextSettings>;
   customImages: Record<Zone, CustomImage[]>;
+
   updateColor: (part: string, color: GloveColor) => void;
   updateSize: (size: string) => void;
   updateTextZone: (zone: Zone, updates: Partial<TextSettings>) => void;
-  addCustomImage: (zone: Zone, url: string, id?: string, transform?: ImageTransform) => void;
+
+  /** Ajoute une image en conservant éventuellement id + transform (depuis un JSON). Renvoie l'id. */
+  addCustomImage: (
+      zone: Zone,
+      url: string,
+      options?: { id?: string; transform?: ImageTransform }
+  ) => string;
+
   removeCustomImage: (zone: Zone, imageId: string) => void;
   updateImageTransform: (zone: Zone, imageId: string, transform: ImageTransform) => void;
+
   resetCustomization: () => void;
   calculatePrice: () => number;
 }
@@ -131,7 +140,7 @@ const zones: Zone[] = [
   'InnerPalm',
   'OutterPalm',
   'Strap',
-  'WristOutline'
+  'WristOutline',
 ];
 
 const initialGlove: CustomGlove = {
@@ -180,71 +189,14 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
   glove: initialGlove,
 
   textZones: {
-    Wrist: {
-      text: '',
-      font: 'Arial',
-      color: '#FFFFFF',
-      size: 36,
-      rotation: 90,
-      x: 260,
-      y: 360,
-    },
-    InnerThumb: {
-      text: '',
-      font: 'Arial',
-      color: '#FFFFFF',
-      size: 28,
-      rotation: 300,
-      x: 250,
-      y: 220,
-    },
-    OutterThumb: {
-      text: '',
-      font: 'Arial',
-      color: '#FFFFFF',
-      size: 70,
-      rotation: 30,
-      x: 180,
-      y: 230,
-    },
-    InnerPalm: {
-      text: '',
-      font: 'Arial',
-      color: '#FFFFFF',
-      size: 36,
-      rotation: 0,
-      x: 200,
-      y:110,
-    },
-    OutterPalm: {
-      text: '',
-      font: 'Arial',
-      color: '#FFFFFF',
-      size: 32,
-      rotation: 0,
-      x: 350,
-      y: 400,
-    },
-    Strap: {
-      text: '',
-      font: 'Arial',
-      color: '#FFFFFF',
-      size: 32,
-      rotation: 90,
-      x: 110,
-      y: 450,
-    },
-    WristOutline: {
-      text: '',
-      font: 'Arial',
-      color: '#FFFFFF',
-      size: 64,
-      rotation: 0,
-      x: 256,
-      y: 256,
-    },
+    Wrist: { text: '', font: 'Arial', color: '#FFFFFF', size: 36, rotation: 90, x: 260, y: 360 },
+    InnerThumb: { text: '', font: 'Arial', color: '#FFFFFF', size: 28, rotation: 300, x: 250, y: 220 },
+    OutterThumb: { text: '', font: 'Arial', color: '#FFFFFF', size: 70, rotation: 30, x: 180, y: 230 },
+    InnerPalm: { text: '', font: 'Arial', color: '#FFFFFF', size: 36, rotation: 0, x: 200, y: 110 },
+    OutterPalm: { text: '', font: 'Arial', color: '#FFFFFF', size: 32, rotation: 0, x: 350, y: 400 },
+    Strap: { text: '', font: 'Arial', color: '#FFFFFF', size: 32, rotation: 90, x: 110, y: 450 },
+    WristOutline: { text: '', font: 'Arial', color: '#FFFFFF', size: 64, rotation: 0, x: 256, y: 256 },
   },
-
 
   customImages: zones.reduce((acc, zone) => {
     acc[zone] = [];
@@ -254,7 +206,7 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
   updateColor: (part, color) => {
     set((state) => {
       const updatedGlove = { ...state.glove };
-      updatedGlove[`${part}Color`] = color;
+      (updatedGlove as any)[`${part}Color`] = color;
       updatedGlove.customizationCost = get().calculatePrice() - updatedGlove.basePrice;
       return { glove: updatedGlove };
     });
@@ -262,10 +214,7 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
 
   updateSize: (size) => {
     set((state) => ({
-      glove: {
-        ...state.glove,
-        size,
-      },
+      glove: { ...state.glove, size },
     }));
   },
 
@@ -276,49 +225,48 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
         [zone]: {
           ...state.textZones[zone],
           ...updates,
-        }
+        },
       };
 
       if (zone === 'Strap') {
-        updatedZones.WristOutline = {
-          ...state.textZones.WristOutline,
-          ...updates,
-        };
+        updatedZones.WristOutline = { ...state.textZones.WristOutline, ...updates };
       }
 
       return { textZones: updatedZones };
     });
   },
 
-addCustomImage: (zone, url, id?: string, transform?: ImageTransform) => {
-  const newImage: CustomImage = {
-    id: id || uuidv4(),
-    url,
-    transform: transform || { ...defaultImageTransform },
-  };
+  addCustomImage: (zone, url, options) => {
+    const id = options?.id ?? uuidv4();
+    const transform: ImageTransform = options?.transform ?? { ...defaultImageTransform };
+    const newImage: CustomImage = { id, url, transform };
 
-  set((state) => {
-    const updatedImages = {
-      ...state.customImages,
-      [zone]: [...state.customImages[zone], newImage],
-    };
-
-    if (zone === 'Strap') {
-      updatedImages.WristOutline = [...state.customImages.WristOutline, newImage];
-    }
-
-    return { customImages: updatedImages };
-  });
-},
-  removeCustomImage: (zone, imageId) => {
     set((state) => {
-      const updatedImages = {
+      const updatedImages: Record<Zone, CustomImage[]> = {
         ...state.customImages,
-        [zone]: state.customImages[zone].filter(img => img.id !== imageId)
+        [zone]: [...state.customImages[zone], newImage],
       };
 
       if (zone === 'Strap') {
-        updatedImages.WristOutline = state.customImages.WristOutline.filter(img => img.id !== imageId);
+        // miroir vers WristOutline avec le même id + transform
+        updatedImages.WristOutline = [...state.customImages.WristOutline, { ...newImage }];
+      }
+
+      return { customImages: updatedImages };
+    });
+
+    return id;
+  },
+
+  removeCustomImage: (zone, imageId) => {
+    set((state) => {
+      const updatedImages: Record<Zone, CustomImage[]> = {
+        ...state.customImages,
+        [zone]: state.customImages[zone].filter((img) => img.id !== imageId),
+      };
+
+      if (zone === 'Strap') {
+        updatedImages.WristOutline = state.customImages.WristOutline.filter((img) => img.id !== imageId);
       }
 
       return { customImages: updatedImages };
@@ -326,17 +274,16 @@ addCustomImage: (zone, url, id?: string, transform?: ImageTransform) => {
   },
 
   updateImageTransform: (zone, imageId, transform) => {
+    console.log('[store] updateImageTransform ->', { zone, imageId, transform });
     set((state) => {
-      const updatedImages = {
+      const updatedImages: Record<Zone, CustomImage[]> = {
         ...state.customImages,
-        [zone]: state.customImages[zone].map(img => 
-          img.id === imageId ? { ...img, transform } : img
-        )
+        [zone]: state.customImages[zone].map((img) => (img.id === imageId ? { ...img, transform } : img)),
       };
 
       if (zone === 'Strap') {
-        updatedImages.WristOutline = state.customImages.WristOutline.map(img =>
-          img.id === imageId ? { ...img, transform } : img
+        updatedImages.WristOutline = state.customImages.WristOutline.map((img) =>
+            img.id === imageId ? { ...img, transform } : img
         );
       }
 
@@ -384,8 +331,8 @@ addCustomImage: (zone, url, id?: string, transform?: ImageTransform) => {
     total += glove.customTexts.length * 4.99;
 
     const totalImages = Object.entries(get().customImages)
-      .filter(([zone]) => zone !== 'WristOutline')
-      .reduce((sum, [, zoneImages]) => sum + zoneImages.length, 0);
+        .filter(([zone]) => zone !== 'WristOutline')
+        .reduce((sum, [, zoneImages]) => sum + zoneImages.length, 0);
     total += totalImages * 7.99;
 
     return total;

@@ -6,35 +6,37 @@ export function loadCustomizationFromJson(
     textZones: Record<Zone, TextSettings>,
     customImages: Record<Zone, CustomImage[]>
 ) {
-    const {
-        updateColor,
-        updateSize,
-        updateTextZone,
-        addCustomImage,
-        updateImageTransform,
-    } = useCustomizationStore.getState();
+    const { updateColor, updateSize, updateTextZone, addCustomImage } =
+        useCustomizationStore.getState();
 
-    // Mise à jour des couleurs
-    Object.entries(gloveData).forEach(([key, value]) => {
-        if (key.endsWith('Color')) {
-            updateColor(key.replace('Color', ''), value);
+    // Couleurs
+    Object.entries(gloveData || {}).forEach(([key, value]) => {
+        if (key.endsWith('Color') && value && typeof value === 'object') {
+            // part = 'fingers', 'outerPalm', etc.
+            const part = key.replace('Color', '');
+            updateColor(part, value as any);
         }
     });
 
-    // Taille, matière, pattern, trim
-    updateSize(gloveData.size);
+    // Taille
+    if (gloveData?.size) {
+        updateSize(gloveData.size);
+    }
 
-    // Les autres infos générales (si besoin, tu pourras ajouter updateMaterial etc.)
-
-    // Textes personnalisés
-    Object.entries(textZones).forEach(([zone, settings]) => {
-        updateTextZone(zone as Zone, settings);
+    // Textes
+    Object.entries(textZones || {}).forEach(([zone, settings]) => {
+        if (settings) {
+            updateTextZone(zone as Zone, settings);
+        }
     });
 
-    // Images personnalisées
-Object.entries(customImages).forEach(([zone, images]) => {
-    images.forEach((image) => {
-        addCustomImage(zone as Zone, image.url, image.id, image.transform);
+    // Images : on conserve id + transform du JSON dès l'ajout (pas besoin de 2e update)
+    Object.entries(customImages || {}).forEach(([zone, images]) => {
+        (images || []).forEach((image) => {
+            addCustomImage(zone as Zone, image.url, {
+                id: image.id,
+                transform: image.transform,
+            });
+        });
     });
-});
 }
