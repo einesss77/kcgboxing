@@ -176,9 +176,9 @@ const ContactPage: React.FC = () => {
                     <div>
                       <h3 className="font-semibold mb-1">Our Location</h3>
                       <address className="text-neutral-400 not-italic">
-                        123 Boxing Lane<br />
-                        Fightville, CA 90210<br />
-                        United States
+                        United Arab Emirates<br />
+                        Dubai<br />
+                        United Arab Emirates
                       </address>
                     </div>
                   </div>
@@ -269,7 +269,7 @@ const ContactPage: React.FC = () => {
             <div className="bg-neutral-800 rounded-xl p-6">
               <h3 className="text-lg font-semibold mb-2">Do you ship internationally?</h3>
               <p className="text-neutral-400">
-                Yes, we ship worldwide. International shipping rates and delivery times vary by country. Customs fees may apply.
+                Yes, we ship worldwide. International shipping rates and delivery times vary by country and design complexity.
               </p>
             </div>
           </div>
