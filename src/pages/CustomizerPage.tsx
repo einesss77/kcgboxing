@@ -40,13 +40,13 @@ export default function CustomizerPage() {
       });
 
       if (res.ok) {
-        alert('✅ Commande envoyée avec succès !');
+        alert('✅ Order sent successfully !');
       } else {
-        alert('❌ Erreur lors de l’envoi de la commande.');
+        alert('❌ Error occured please try again.');
       }
     } catch (err) {
       console.error(err);
-      alert('❌ Erreur réseau.');
+      alert('❌ network error.');
     }
   };
 
@@ -76,7 +76,7 @@ export default function CustomizerPage() {
 
     console.log("🧤 Objet ajouté au panier :", JSON.stringify(item, null, 2));
     addCartItem(item);
-    alert('✅ Gant ajouté au panier !');
+    alert('✅ Glove successfully added to cart !');
     navigate('/cart');
   };
 
