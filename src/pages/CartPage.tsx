@@ -245,7 +245,7 @@ const CartPage: React.FC = () => {
               <h3 className="text-lg font-semibold text-white">Informations client</h3>
               <input
                   type="text"
-                  placeholder="Nom complet"
+                  placeholder="Full Name"
                   value={customerInfo.name}
                   onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
                   className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
@@ -259,14 +259,14 @@ const CartPage: React.FC = () => {
               />
               <input
                   type="tel"
-                  placeholder="Téléphone"
+                  placeholder="Phone number"
                   value={customerInfo.phone}
                   onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
                   className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
               />
               <input
                   type="text"
-                  placeholder="Adresse de livraison"
+                  placeholder="Delivery address"
                   value={customerInfo.address}
                   onChange={(e) => setCustomerInfo({...customerInfo, address: e.target.value})}
                   className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
@@ -285,7 +285,7 @@ const CartPage: React.FC = () => {
 
 
             <div className="mt-6 text-sm text-neutral-400 text-center">
-              <p>Free shipping on all orders over $150</p>
+              <p>Free Shipping Worldwide</p>
               <p className="mt-2">30-day satisfaction guarantee</p>
             </div>
           </div>
