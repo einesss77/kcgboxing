@@ -16,14 +16,14 @@ const AdminOrdersPage: React.FC = () => {
             <h1 className="text-2xl font-bold mb-6">📦 Liste des commandes</h1>
 
             {orders.length === 0 ? (
-                <p>Aucune commande pour le moment.</p>
+                <p>No orders at this moment.</p>
             ) : (
                 <table className="w-full text-left border-collapse">
                     <thead>
                     <tr className="bg-neutral-800">
-                        <th className="p-2 border border-neutral-700">Nom</th>
+                        <th className="p-2 border border-neutral-700">Name</th>
                         <th className="p-2 border border-neutral-700">Email</th>
-                        <th className="p-2 border border-neutral-700">Téléphone</th>
+                        <th className="p-2 border border-neutral-700">Phone number</th>
                         <th className="p-2 border border-neutral-700">Adresse</th>
                         <th className="p-2 border border-neutral-700">Date</th>
                         <th className="p-2 border border-neutral-700">Total</th>
