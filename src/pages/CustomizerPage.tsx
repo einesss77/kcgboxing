@@ -74,7 +74,7 @@ export default function CustomizerPage() {
       quantity: 1,
     };
 
-    console.log("🧤 Objet ajouté au panier :", JSON.stringify(item, null, 2));
+    console.log("🧤 Glove has beend added to cart :", JSON.stringify(item, null, 2));
     addCartItem(item);
     alert('✅ Glove successfully added to cart !');
     navigate('/cart');
