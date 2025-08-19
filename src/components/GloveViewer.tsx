@@ -3,8 +3,41 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment';
 import { useCustomizationStore } from '../store/customizationStore';
 import { generateTextTexture } from '../utils/GenerateTextTexture';
+
+// Apply finish ONLY from color (metallic/fluorescent/solid)
+function applyFinish(
+  mat: THREE.MeshStandardMaterial,
+  c: { hex: string; finish?: 'solid'|'metallic'|'fluorescent'; glow?: number }
+) {
+  const base = new THREE.Color(c.hex);
+
+  // Albedo comes from map; keep base white
+  mat.color.set('#ffffff');
+  // Defaults
+  mat.metalness = 0.1;
+  mat.roughness = 0.5;
+  mat.emissive.set(0x000000);
+  mat.emissiveIntensity = 0;
+
+  switch (c.finish) {
+    case 'metallic':
+      mat.metalness = 0.9;
+      mat.roughness = 0.22;
+      break;
+    case 'fluorescent':
+      mat.metalness = 0.0;
+      mat.roughness = 0.35;
+      mat.emissive.copy(base);
+      mat.emissiveIntensity = Math.min(1.2, Math.max(0.2, c.glow ?? 0.9));
+      break;
+    default:
+      // solid
+      break;
+  }
+}
 
 function GloveViewer() {
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -28,12 +61,21 @@ function GloveViewer() {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
+    (renderer as any).outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
     mountRef.current.appendChild(renderer.domElement);
 
+    // Lights
     const ambient = new THREE.AmbientLight(0xffffff, 0.6);
     const directional = new THREE.DirectionalLight(0xffffff, 1);
     directional.position.set(5, 10, 7);
     scene.add(ambient, directional);
+
+    // Simple environment for metallic reflections
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const env = new RoomEnvironment();
+    const envRT = pmrem.fromScene(env, 0.04);
+    scene.environment = envRT.texture;
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 1, 0);
@@ -50,8 +92,8 @@ function GloveViewer() {
       model.scale.set(0.1, 0.1, 0.1);
       model.position.set(0, 0.1, 0);
       modelRef.current = model;
+      void updateMaterials();
       scene.add(model);
-      updateMaterials();
     });
 
     const animate = () => {
@@ -71,78 +113,93 @@ function GloveViewer() {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      envRT.dispose();
+      pmrem.dispose();
       mountRef.current?.removeChild(renderer.domElement);
     };
   }, []);
 
-  const updateMaterials = async () => {
-    if (!modelRef.current) return;
+  const getColorForMesh = (name: string) => {
+    switch (name) {
+      case 'Fingers':       return glove.fingersColor;
+      case 'InnerPalm':     return glove.innerPalmColor;
+      case 'OutterPalm':    return glove.outerPalmColor;
+      case 'InnerThumb':    return glove.innerThumbColor;
+      case 'OutterThumb':   return glove.outerThumbColor;
+      case 'Strap':         return glove.strapColor;
+      case 'Wrist':         return glove.wristColor;
+      case 'WristOutline':  return glove.wristOutlineColor;
+      case 'Outline':       return glove.outlineColor;
+      default:              return glove.mainColor;
+    }
+  };
 
-    modelRef.current.traverse(async (child) => {
-      if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-        const material = child.material;
-        const name = child.name;
+  const isZone = (name: string): name is keyof typeof textZones =>
+    Object.prototype.hasOwnProperty.call(textZones, name);
 
-        // 🧠 Récupère la vraie couleur du gant
-        let gloveColorHex = '#ffffff';
-        switch (name) {
-          case 'Fingers': gloveColorHex = glove.fingersColor.hex; break;
-          case 'InnerPalm': gloveColorHex = glove.innerPalmColor.hex; break;
-          case 'OutterPalm': gloveColorHex = glove.outerPalmColor.hex; break;
-          case 'InnerThumb': gloveColorHex = glove.innerThumbColor.hex; break;
-          case 'OutterThumb': gloveColorHex = glove.outerThumbColor.hex; break;
-          case 'Strap': gloveColorHex = glove.strapColor.hex; break;
-          case 'Wrist': gloveColorHex = glove.wristColor.hex; break;
-          case 'WristOutline': gloveColorHex = glove.wristOutlineColor.hex; break;
-          case 'Outline': gloveColorHex = glove.outlineColor.hex; break;
-        }
+  const processMesh = async (mesh: THREE.Mesh) => {
+    if (!(mesh.material instanceof THREE.MeshStandardMaterial)) return;
 
-        // ⛔️ Ne pas teinter la texture
-        material.color.set('#ffffff');
+    const material = mesh.material;
+    const name = mesh.name;
+    const c = getColorForMesh(name);
+    const bgHex = c.hex;
 
-        const zone = name as keyof typeof textZones;
-        const hasText = textZones[zone]?.text;
-        const images = customImages[zone] ?? [];
+    // Collect overlays for this zone (if any)
+    const zone = isZone(name) ? name : undefined;
+    const z = zone ? textZones[zone] : undefined;
+    const txt = z?.text ?? '';
+    const imgs = zone ? (customImages[zone] ?? []) : [];
 
-        images.forEach(image => {
-          if (!image.transform) {
-            image.transform = { x: 0, y: 0, scale: 1, rotation: 0 };
-          }
-        });
-
-        if (hasText || images.length > 0) {
-          const texture = await generateTextTexture({
-            text: textZones[zone]?.text || '',
-            font: textZones[zone]?.font,
-            size: textZones[zone]?.size,
-            textColor: textZones[zone]?.color,
-            bgColor: gloveColorHex,
-            x: textZones[zone]?.x,
-            y: textZones[zone]?.y,
-            rotation: textZones[zone]?.rotation,
-            images: images
-          });
-
-          material.map = texture;
-        } else {
-          // 🧤 Crée une texture plate de la couleur du gant
-          const canvas = document.createElement('canvas');
-          canvas.width = canvas.height = 2;
-          const ctx = canvas.getContext('2d')!;
-          ctx.fillStyle = gloveColorHex;
-          ctx.fillRect(0, 0, 2, 2);
-          const baseTexture = new THREE.CanvasTexture(canvas);
-
-          material.map = baseTexture;
-        }
-
-        material.needsUpdate = true;
+    imgs.forEach((image: any) => {
+      if (!image.transform) {
+        image.transform = { x: 0, y: 0, scale: 1, rotation: 0 };
       }
     });
+
+    // Build map: if there is text or images, composite them on top of a flat bg
+    if (txt || imgs.length > 0) {
+      const texture = await generateTextTexture({
+        text: txt,
+        font: z?.font,
+        size: z?.size,
+        textColor: z?.color,
+        bgColor: bgHex,         // only background color is used from GloveColor
+        x: z?.x,
+        y: z?.y,
+        rotation: z?.rotation,
+        images: imgs
+        // IMPORTANT: no finish/gloss/glow passed here (texts stay normal)
+      });
+      material.map = texture;
+    } else {
+      // No overlays: 2x2 flat texture in the selected color
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 2;
+      const ctx = canvas.getContext('2d')!;
+      ctx.fillStyle = bgHex;
+      ctx.fillRect(0, 0, 2, 2);
+      material.map = new THREE.CanvasTexture(canvas);
+    }
+
+    // Apply PBR finish based on the color selection ONLY
+    applyFinish(material, c);
+    material.needsUpdate = true;
+  };
+
+  const updateMaterials = async () => {
+    const model = modelRef.current;
+    if (!model) return;
+
+    const tasks: Promise<void>[] = [];
+    model.traverse((child) => {
+      if (child instanceof THREE.Mesh) tasks.push(processMesh(child));
+    });
+    await Promise.all(tasks);
   };
 
   useEffect(() => {
-    updateMaterials();
+    void updateMaterials();
   }, [glove, textZones, customImages]);
 
   return (
