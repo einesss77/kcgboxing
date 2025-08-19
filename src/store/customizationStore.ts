@@ -1,10 +1,20 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 
+// ===== New: finishes =====
+export type Finish = 'solid' | 'metallic' | 'fluorescent';
+
 export interface GloveColor {
   name: string;
   hex: string;
   price: number;
+
+  // Optional visual finish (kept optional for backward compatibility)
+  finish?: Finish;
+  /** Metallic highlight strength 0..1 (used when finish === 'metallic') */
+  gloss?: number;
+  /** Fluorescent glow intensity 0..1 (used when finish === 'fluorescent') */
+  glow?: number;
 }
 
 export interface GloveMaterial {
@@ -39,13 +49,13 @@ export interface CustomImage {
 }
 
 export type Zone =
-    | 'Wrist'
-    | 'InnerThumb'
-    | 'OutterThumb'
-    | 'InnerPalm'
-    | 'OutterPalm'
-    | 'Strap'
-    | 'WristOutline';
+  | 'Wrist'
+  | 'InnerThumb'
+  | 'OutterThumb'
+  | 'InnerPalm'
+  | 'OutterPalm'
+  | 'Strap'
+  | 'WristOutline';
 
 export interface TextSettings {
   text: string;
@@ -55,6 +65,11 @@ export interface TextSettings {
   rotation: number;
   x: number;
   y: number;
+
+  // Optional finish for text rendering on the canvas
+  finish?: Finish; // 'solid' | 'metallic' | 'fluorescent'
+  gloss?: number;  // 0..1 (metallic intensity)
+  glow?: number;   // 0..1 (fluorescent intensity)
 }
 
 export interface CustomGlove {
@@ -98,9 +113,9 @@ interface CustomizationState {
 
   /** Ajoute une image en conservant éventuellement id + transform (depuis un JSON). Renvoie l'id. */
   addCustomImage: (
-      zone: Zone,
-      url: string,
-      options?: { id?: string; transform?: ImageTransform }
+    zone: Zone,
+    url: string,
+    options?: { id?: string; transform?: ImageTransform }
   ) => string;
 
   removeCustomImage: (zone: Zone, imageId: string) => void;
@@ -110,10 +125,12 @@ interface CustomizationState {
   calculatePrice: () => number;
 }
 
+// ===== Defaults with finishes =====
 const defaultColor: GloveColor = {
   name: 'Classic Black',
   hex: '#000000',
   price: 0,
+  finish: 'solid', // default finish for colors
 };
 
 const defaultTextSettings: TextSettings = {
@@ -124,6 +141,9 @@ const defaultTextSettings: TextSettings = {
   rotation: 0,
   x: 256,
   y: 256,
+  finish: 'solid', // default finish for text
+  gloss: 0.7,      // used if metallic
+  glow: 0.8,       // used if fluorescent
 };
 
 const defaultImageTransform: ImageTransform = {
@@ -145,24 +165,24 @@ const zones: Zone[] = [
 
 const initialGlove: CustomGlove = {
   id: uuidv4(),
-  basePrice: 129.99,
+  basePrice: 99.99,
   customizationCost: 0,
 
-  palmColor: defaultColor,
-  thumbColor: defaultColor,
-  mainColor: defaultColor,
-  wristColor: defaultColor,
-  laceColor: defaultColor,
-  trimColor: defaultColor,
+  palmColor: { ...defaultColor },
+  thumbColor: { ...defaultColor },
+  mainColor: { ...defaultColor },
+  wristColor: { ...defaultColor },
+  laceColor: { ...defaultColor },
+  trimColor: { ...defaultColor },
 
-  fingersColor: defaultColor,
-  innerPalmColor: defaultColor,
-  outerPalmColor: defaultColor,
-  innerThumbColor: defaultColor,
-  outerThumbColor: defaultColor,
-  strapColor: defaultColor,
-  wristOutlineColor: defaultColor,
-  outlineColor: defaultColor,
+  fingersColor: { ...defaultColor },
+  innerPalmColor: { ...defaultColor },
+  outerPalmColor: { ...defaultColor },
+  innerThumbColor: { ...defaultColor },
+  outerThumbColor: { ...defaultColor },
+  strapColor: { ...defaultColor },
+  wristOutlineColor: { ...defaultColor },
+  outlineColor: { ...defaultColor },
 
   material: {
     name: 'Premium Leather',
@@ -188,14 +208,16 @@ const initialGlove: CustomGlove = {
 export const useCustomizationStore = create<CustomizationState>((set, get) => ({
   glove: initialGlove,
 
+  // Use spreads so any new defaults (finish/gloss/glow) propagate automatically
   textZones: {
-    Wrist: { text: '', font: 'Arial', color: '#FFFFFF', size: 36, rotation: 90, x: 260, y: 360 },
+ Wrist: { text: '', font: 'Arial', color: '#FFFFFF', size: 36, rotation: 90, x: 260, y: 360 },
     InnerThumb: { text: '', font: 'Arial', color: '#FFFFFF', size: 28, rotation: 300, x: 250, y: 220 },
     OutterThumb: { text: '', font: 'Arial', color: '#FFFFFF', size: 70, rotation: 30, x: 180, y: 230 },
     InnerPalm: { text: '', font: 'Arial', color: '#FFFFFF', size: 36, rotation: 0, x: 200, y: 110 },
     OutterPalm: { text: '', font: 'Arial', color: '#FFFFFF', size: 32, rotation: 0, x: 350, y: 400 },
     Strap: { text: '', font: 'Arial', color: '#FFFFFF', size: 32, rotation: 90, x: 110, y: 450 },
     WristOutline: { text: '', font: 'Arial', color: '#FFFFFF', size: 64, rotation: 0, x: 256, y: 256 },
+
   },
 
   customImages: zones.reduce((acc, zone) => {
@@ -206,6 +228,7 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
   updateColor: (part, color) => {
     set((state) => {
       const updatedGlove = { ...state.glove };
+      // store the entire object to preserve finish/gloss/glow
       (updatedGlove as any)[`${part}Color`] = color;
       updatedGlove.customizationCost = get().calculatePrice() - updatedGlove.basePrice;
       return { glove: updatedGlove };
@@ -220,16 +243,25 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
 
   updateTextZone: (zone, updates) => {
     set((state) => {
-      const updatedZones = {
+      const updated = {
+        ...state.textZones[zone],
+        ...updates,
+      };
+
+      const updatedZones: Record<Zone, TextSettings> = {
         ...state.textZones,
         [zone]: {
           ...state.textZones[zone],
           ...updates,
         },
-      };
+       };
 
+      // Mirror Strap settings to WristOutline (as before)
       if (zone === 'Strap') {
-        updatedZones.WristOutline = { ...state.textZones.WristOutline, ...updates };
+        updatedZones.WristOutline = {
+          ...state.textZones.WristOutline,
+          ...updates,
+        };
       }
 
       return { textZones: updatedZones };
@@ -283,7 +315,7 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
 
       if (zone === 'Strap') {
         updatedImages.WristOutline = state.customImages.WristOutline.map((img) =>
-            img.id === imageId ? { ...img, transform } : img
+         img.id === imageId ? { ...img, transform } : img
         );
       }
 
@@ -331,8 +363,8 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
     total += glove.customTexts.length * 4.99;
 
     const totalImages = Object.entries(get().customImages)
-        .filter(([zone]) => zone !== 'WristOutline')
-        .reduce((sum, [, zoneImages]) => sum + zoneImages.length, 0);
+      .filter(([zone]) => zone !== 'WristOutline')
+      .reduce((sum, [, zoneImages]) => sum + zoneImages.length, 0);
     total += totalImages * 7.99;
 
     return total;
