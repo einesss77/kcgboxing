@@ -52,8 +52,10 @@ export default function TextCustomization() {
                 <option value="Arial">Arial</option>
                 <option value="Courier New">Courier New</option>
                 <option value="Georgia">Georgia</option>
-                <option value="Impact">Impact</option>
-                <option value="Verdana">Verdana</option>
+                <option value="Pacifico">Pacifico</option>
+                <option value="Parisienne">Parisienne</option>
+                <option value="League Script">League Script</option>
+                <option value="UnifrakturMaguntia">UnifrakturMaguntia</option>
               </select>
             </div>
 
