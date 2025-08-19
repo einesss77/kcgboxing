@@ -1,7 +1,15 @@
+export type Finish = 'solid' | 'metallic' | 'fluorescent';
+
 export interface GloveColor {
   name: string;
   hex: string;
   price: number;
+  /** Visual finish of the color (optional to keep backward compatibility) */
+  finish?: Finish;
+  /** Metallic highlight strength 0..1 (used when finish === 'metallic') */
+  gloss?: number;
+  /** Fluorescent glow intensity 0..1 (used when finish === 'fluorescent') */
+  glow?: number;
 }
 
 export interface GloveMaterial {
@@ -40,15 +48,19 @@ export interface CustomGlove {
   id: string;
   basePrice: number;
   customizationCost: number;
+
+  // Colorable parts
   palmColor: GloveColor;
   thumbColor: GloveColor;
   mainColor: GloveColor;
   wristColor: GloveColor;
   laceColor: GloveColor;
   trimColor: GloveColor;
+
   material: GloveMaterial;
   pattern: GlovePattern;
   trim: GloveTrim;
+
   size: string;
   customText: string;
   customTexts: CustomText[];
