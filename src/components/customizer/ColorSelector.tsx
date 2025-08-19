@@ -1,39 +1,78 @@
 import React from 'react';
 import { useCustomizationStore } from '../../store/customizationStore';
 import { GloveColor } from '../../types/glove';
-    
-const colors: GloveColor[] = [  
-  { name: 'Classic Black', hex: '#000000', price: 0 },  
-  { name: 'Classic White', hex: '#FFFFFF', price: 0 },  
-  { name: 'Navy Blue', hex: '#1a237e', price: 0 }, 
-  { name: 'Metallic Gold', hex: '#c5a572', price: 0 }, 
-  { name: 'Royal Blue', hex: '#2563EB', price: 0 }, 
-  { name: 'Forest Green', hex: '#047857', price: 0 },
-  { name: 'Neon Green', hex: '#22C55E', price: 0 },
-  { name: 'Metallic Silver', hex: '#94A3B8', price: 0 },  
-  { name: 'Metallic Purple', hex: '#9333EA', price: 0 },
-  { name: 'Rich Red', hex: '#dc2626', price: 0 },
-  { name: 'Deep Brown', hex: '#78350f', price: 0 },
-  { name: 'Carbon Black', hex: '#111827', price: 0 }, 
-  { name: 'Pearl White', hex: '#f8fafc', price: 0 },
-  { name: 'Rose Gold', hex: '#f472b6', price: 0 },
-  { name: 'Ultra Black', hex: '#0A0A0A', price: 0 }
-];   
- 
-const ColorSelector: React.FC = () => {  
+
+// === Color palette with finishes ===
+const colors: GloveColor[] = [
+  { name: 'Classic Black',   hex: '#000000', price: 0, finish: 'solid' },
+  { name: 'Classic White',   hex: '#FFFFFF', price: 0, finish: 'solid' },
+  { name: 'Navy Blue',       hex: '#1a237e', price: 0, finish: 'solid' },
+  { name: 'Royal Blue',      hex: '#2563EB', price: 0, finish: 'solid' },
+  { name: 'Forest Green',    hex: '#047857', price: 0, finish: 'solid' },
+  { name: 'Rich Red',        hex: '#F03513', price: 0, finish: 'solid' },
+  { name: 'Deep Brown',      hex: '#78350f', price: 0, finish: 'solid' },
+  { name: 'Pearl White',     hex: '#f8fafc', price: 0, finish: 'solid' },
+  { name: 'Carbon Black',    hex: '#111827', price: 0, finish: 'solid' },
+
+  // Metallics
+  { name: 'Metallic Gold',   hex: '#c5a572', price: 0, finish: 'metallic', gloss: 0.75 },
+  { name: 'Metallic Silver', hex: '#94A3B8', price: 0, finish: 'metallic', gloss: 0.7 },
+  { name: 'Metallic Purple', hex: '#9013F0', price: 0, finish: 'metallic', gloss: 0.7 },
+  { name: 'Rose Gold',       hex: '#f4a7a7', price: 0, finish: 'metallic', gloss: 0.7 },
+
+  // Fluorescents
+  { name: 'Neon Green',      hex: '#22C55E', price: 0, finish: 'fluorescent', glow: 0.85 },
+  { name: 'Clear Blue',      hex: '#13ECF0', price: 0, finish: 'fluorescent', glow: 0.85 },
+  { name: 'Neon Yellow',     hex: '#FFFF33', price: 0, finish: 'fluorescent', glow: 0.9 },
+  { name: 'Neon Pink',       hex: '#FF10F0', price: 0, finish: 'fluorescent', glow: 0.9 },
+];
+
+// === Swatch styling helpers ===
+function metallicStyle(hex: string): React.CSSProperties {
+  return {
+    backgroundImage: `
+      linear-gradient(
+        180deg,
+        rgba(0,0,0,0.25) 0%,
+        ${hex} 20%,
+        rgba(255,255,255,0.85) 45%,
+        ${hex} 55%,
+        rgba(0,0,0,0.2) 80%,
+        ${hex} 100%
+      )
+    `,
+    boxShadow:
+      'inset 0 2px 6px rgba(255,255,255,0.35), inset 0 -2px 8px rgba(0,0,0,0.25)',
+  };
+}
+function fluorescentStyle(hex: string): React.CSSProperties {
+  return {
+    backgroundColor: hex,
+    boxShadow: `0 0 8px ${hex}, 0 0 16px ${hex}, 0 0 28px ${hex}88`,
+    filter: 'saturate(1.35) brightness(1.1)',
+  };
+}
+function solidStyle(hex: string): React.CSSProperties {
+  return { backgroundColor: hex };
+}
+function getSwatchStyle(c: GloveColor): React.CSSProperties {
+  if (c.finish === 'metallic') return metallicStyle(c.hex);
+  if (c.finish === 'fluorescent') return fluorescentStyle(c.hex);
+  return solidStyle(c.hex);
+}
+
+const ColorSelector: React.FC = () => {
   const { glove, updateColor } = useCustomizationStore();
- 
+
+  // Match your current CustomGlove fields exactly
   const sections = [
-    { id: 'fingers', label: 'Fingers', color: glove.fingersColor },
-    { id: 'innerPalm', label: 'Inner Palm', color: glove.innerPalmColor },
-    { id: 'outerPalm', label: 'Outer Palm', color: glove.outerPalmColor },
-    { id: 'innerThumb', label: 'Inner Thumb', color: glove.innerThumbColor },
-    { id: 'outerThumb', label: 'Outer Thumb', color: glove.outerThumbColor },
-    { id: 'strap', label: 'Wrist Outline', color: glove.strapColor },
-    { id: 'wrist', label: 'Wrist', color: glove.wristColor },
-    { id: 'wristOutline', label: 'Starp', color: glove.wristOutlineColor },
-    { id: 'outline', label: 'Outline', color: glove.outlineColor },
-  ];
+    { id: 'mainColor',  label: 'Main',   color: glove.mainColor },
+    { id: 'palmColor',  label: 'Palm',   color: glove.palmColor },
+    { id: 'thumbColor', label: 'Thumb',  color: glove.thumbColor },
+    { id: 'wristColor', label: 'Wrist',  color: glove.wristColor },
+    { id: 'laceColor',  label: 'Laces',  color: glove.laceColor },
+    { id: 'trimColor',  label: 'Trim',   color: glove.trimColor },
+  ] as const;
 
   return (
     <div className="space-y-8">
@@ -41,40 +80,48 @@ const ColorSelector: React.FC = () => {
         <div key={section.id} className="mb-6">
           <h3 className="text-lg font-semibold mb-3">{section.label}</h3>
           <div className="grid grid-cols-5 gap-3">
-            {colors.map((color) => (
-              <button
-                key={`${section.id}-${color.name}`}
-                onClick={() => updateColor(section.id, color)}
-                style={{ backgroundColor: color.hex }}
-                className={`
-                  w-full aspect-square rounded-lg relative z-10 border border-white
-                  ${section.color?.name === color.name ? 'ring-2 ring-gold ring-offset-2 ring-offset-navy' : ''}
-                  hover:scale-105 transition-transform duration-200
-                `}
-                title={`${color.name}${color.price > 0 ? ` (+$${color.price.toFixed(2)})` : ''}`}
-              >
-                {color.price > 0 && (
-                  <div className="absolute bottom-0 right-0 bg-black/70 px-1.5 py-0.5 text-xs text-white">
-                    +${color.price.toFixed(2)}
-                  </div>
-                )}
-                {color.name.toLowerCase().includes('metallic') && (
-                  <div className="absolute top-0 left-0 bg-yellow-300/30 px-1.5 py-0.5 text-xs text-black">
-                    ✨ Metallic
-                  </div>
-                )}
-              </button>
-            ))}
+            {colors.map((color) => {
+              const selected = section.color?.name === color.name;
+              return (
+                <button
+                  key={`${section.id}-${color.name}`}
+                  onClick={() => updateColor(section.id, color)}
+                  style={getSwatchStyle(color)}
+                  className={`
+                    w-full aspect-square rounded-lg relative z-10 border border-white/70
+                    ${selected ? 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-neutral-900' : ''}
+                    hover:scale-105 transition-transform duration-200
+                  `}
+                  title={`${color.name}${color.price > 0 ? ` (+$${color.price.toFixed(2)})` : ''}`}
+                >
+                  {color.price > 0 && (
+                    <div className="absolute bottom-0 right-0 bg-black/70 px-1.5 py-0.5 text-xs text-white">
+                      +${color.price.toFixed(2)}
+                    </div>
+                  )}
+                  {color.finish === 'metallic' && (
+                    <div className="absolute top-0 left-0 bg-yellow-300/30 px-1.5 py-0.5 text-xs text-black">
+                      ✨ Metallic
+                    </div>
+                  )}
+                  {color.finish === 'fluorescent' && (
+                    <div className="absolute top-0 left-0 bg-green-300/30 px-1.5 py-0.5 text-xs text-black">
+                      ⚡ Fluorescent
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       ))}
 
-      <div className="p-4 bg-navy/30 rounded-lg border border-gold/20">
+      <div className="p-4 bg-neutral-900/50 rounded-lg border border-yellow-500/20">
         <h4 className="font-semibold mb-2">Color Selection Tips</h4>
-        <ul className="text-sm text-neutral-400 space-y-1">
-          <li>• Metallic finishes add a premium look and enhanced durability</li>
-          <li>• Classic colors are included at no additional cost</li>
-          <li>• Premium colors feature special pigments for vibrant, long-lasting color</li>
+        <ul className="text-sm text-neutral-300 space-y-1">
+          <li>• Metallic finishes show a subtle sheen and premium look.</li>
+          <li>• Fluorescent colors appear bright with a glowing edge.</li>
+          <li>• Classic colors are included at no additional cost.</li>
         </ul>
       </div>
     </div>
