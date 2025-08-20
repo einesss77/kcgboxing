@@ -1,6 +1,31 @@
 import * as THREE from 'three';
 import type { CustomImage } from '../store/customizationStore';
 
+//
+// Font-loading helpers: ensure the chosen web font is available before drawing
+//
+const loadedFontFamilies = new Set<string>();
+
+function getPrimaryFamily(fontSetting: string): string {
+  const first = (fontSetting || '').split(',')[0].trim();
+  return first.replace(/^['"]|['"]$/g, ''); // strip surrounding quotes
+}
+
+async function ensureFontLoaded(fontFamily: string, px: number) {
+  // Best-effort for older browsers that lack the Font Loading API
+  if (!('fonts' in document)) return;
+  if (loadedFontFamilies.has(fontFamily)) return;
+
+  try {
+    // Load the exact family at the size you need
+    // @ts-ignore
+    await document.fonts.load(`${px}px "${fontFamily}"`);
+    loadedFontFamilies.add(fontFamily);
+  } catch (e) {
+    console.warn('Font load failed (fallback may render):', fontFamily, e);
+  }
+}
+
 interface TextOptions {
   text: string;
   font?: string;
@@ -29,7 +54,7 @@ export async function generateTextTexture({
   const ctx = canvas.getContext('2d')!;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Background color
+  // Background
   ctx.save();
   ctx.globalAlpha = 1;
   ctx.fillStyle = bgColor ?? '#000';
@@ -39,10 +64,10 @@ export async function generateTextTexture({
   // Images
   for (const image of images) {
     const img = await loadImage(image.url);
-    const { x, y, scale, rotation } = image.transform;
+    const { x: ix, y: iy, scale, rotation: r } = image.transform;
     ctx.save();
-    ctx.translate(x + 256, y + 256);
-    ctx.rotate((rotation * Math.PI) / 180);
+    ctx.translate(ix + 256, iy + 256);
+    ctx.rotate((r * Math.PI) / 180);
     ctx.scale(scale, scale);
     ctx.drawImage(img, -img.width / 2, -img.height / 2);
     ctx.restore();
@@ -50,15 +75,25 @@ export async function generateTextTexture({
 
   // Text
   if (text) {
+    // 1) Wait for the selected web font
+    const family = getPrimaryFamily(font); // "Pacifico" | "Parisienne" | "League Script" | "UnifrakturMaguntia"
+    await ensureFontLoaded(family, size);
+
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate((rotation * Math.PI) / 180);
-    ctx.font = `bold ${size}px ${font}`;
+
+    // 2) Do NOT force bold — some script/blackletter faces have no bold variant
+    // Quote family names to support spaces
+    ctx.font = `${size}px "${family}"`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.lineWidth = 4;
+
+    // Optional: stroke width scaled to size for nicer outlines
+    ctx.lineWidth = Math.max(1, Math.round(size * 0.06));
     ctx.strokeStyle = '#FFFFFF';
     ctx.strokeText(text, 0, 0);
+
     ctx.fillStyle = textColor;
     ctx.fillText(text, 0, 0);
     ctx.restore();
