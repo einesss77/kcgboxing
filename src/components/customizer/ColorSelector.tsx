@@ -66,12 +66,15 @@ const ColorSelector: React.FC = () => {
 
   // Match your current CustomGlove fields exactly
   const sections = [
-    { id: 'mainColor',  label: 'Main',   color: glove.mainColor },
-    { id: 'palmColor',  label: 'Palm',   color: glove.palmColor },
-    { id: 'thumbColor', label: 'Thumb',  color: glove.thumbColor },
-    { id: 'wristColor', label: 'Wrist',  color: glove.wristColor },
-    { id: 'laceColor',  label: 'Laces',  color: glove.laceColor },
-    { id: 'trimColor',  label: 'Trim',   color: glove.trimColor },
+    { id: 'fingers', label: 'Fingers', color: glove.fingersColor },
+    { id: 'innerPalm', label: 'Inner Palm', color: glove.innerPalmColor },
+    { id: 'outerPalm', label: 'Outer Palm', color: glove.outerPalmColor },
+    { id: 'innerThumb', label: 'Inner Thumb', color: glove.innerThumbColor },
+    { id: 'outerThumb', label: 'Outer Thumb', color: glove.outerThumbColor },
+    { id: 'strap', label: 'Wrist Outline', color: glove.strapColor },
+    { id: 'wrist', label: 'Wrist', color: glove.wristColor },
+    { id: 'wristOutline', label: 'Starp', color: glove.wristOutlineColor },
+    { id: 'outline', label: 'Outline', color: glove.outlineColor },
   ] as const;
 
   return (
