@@ -5,12 +5,13 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment';
 import { useCustomizationStore } from '../store/customizationStore';
+import type { CustomImage, TextSettings } from '../store/customizationStore';
 import { generateTextTexture } from '../utils/GenerateTextTexture';
 
 // Apply finish ONLY from color (metallic/fluorescent/solid)
 function applyFinish(
   mat: THREE.MeshStandardMaterial,
-  c: { hex: string; finish?: 'solid'|'metallic'|'fluorescent'; glow?: number }
+  c: { hex: string; finish?: 'solid' | 'metallic' | 'fluorescent'; glow?: number }
 ) {
   const base = new THREE.Color(c.hex);
 
@@ -38,6 +39,93 @@ function applyFinish(
       break;
   }
 }
+
+/* =========================
+   MASK HELPERS (keep finishes OFF text & images)
+   white = background (finish ON)
+   black = text/images (finish OFF)
+========================= */
+const loadedFontFamilies = new Set<string>();
+function getPrimaryFamily(fontSetting?: string) {
+  const first = (fontSetting || 'Arial').split(',')[0].trim();
+  return first.replace(/^['"]|['"]$/g, '');
+}
+async function ensureFontLoaded(fontFamily: string, px: number) {
+  // @ts-ignore
+  if (!('fonts' in document)) return;
+  if (loadedFontFamilies.has(fontFamily)) return;
+  try {
+    // @ts-ignore
+    await document.fonts.load(`${px}px "${fontFamily}"`);
+    loadedFontFamilies.add(fontFamily);
+  } catch {
+    // ignore
+  }
+}
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+async function buildMaskTexture(z?: TextSettings, imgs?: CustomImage[]) {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 512;
+  const ctx = canvas.getContext('2d')!;
+  // Start white (finish ON everywhere)
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 512, 512);
+
+  // Knock out TEXT to black (finish OFF)
+  if (z?.text) {
+    const family = getPrimaryFamily(z.font);
+    await ensureFontLoaded(family, z.size ?? 64);
+
+    ctx.save();
+    ctx.translate(z.x ?? 256, z.y ?? 256);
+    ctx.rotate(((z.rotation ?? 0) * Math.PI) / 180);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `${z.size ?? 64}px "${family}"`;
+    ctx.fillStyle = '#000000';
+    ctx.fillText(z.text, 0, 0);
+    ctx.restore();
+  }
+
+  // Knock out IMAGES to black (approx by their transformed rect)
+  if (imgs && imgs.length) {
+    for (const image of imgs) {
+      try {
+        const img = await loadImage(image.url);
+        const { x, y, scale, rotation } = image.transform || {
+          x: 0,
+          y: 0,
+          scale: 1,
+          rotation: 0,
+        };
+
+        ctx.save();
+        ctx.translate((x ?? 0) + 256, (y ?? 0) + 256);
+        ctx.rotate(((rotation ?? 0) * Math.PI) / 180);
+        ctx.scale(scale ?? 1, scale ?? 1);
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(-img.width / 2, -img.height / 2, img.width, img.height);
+        ctx.restore();
+      } catch {
+        // skip if image fails to load
+      }
+    }
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.flipY = false;
+  tex.needsUpdate = true;
+  return tex;
+}
+/* ======================= */
 
 function GloveViewer() {
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -71,7 +159,7 @@ function GloveViewer() {
     directional.position.set(5, 10, 7);
     scene.add(ambient, directional);
 
-    // Simple environment for metallic reflections
+    // Environment for metallic reflections
     const pmrem = new THREE.PMREMGenerator(renderer);
     const env = new RoomEnvironment();
     const envRT = pmrem.fromScene(env, 0.04);
@@ -92,8 +180,8 @@ function GloveViewer() {
       model.scale.set(0.1, 0.1, 0.1);
       model.position.set(0, 0.1, 0);
       modelRef.current = model;
-      void updateMaterials();
       scene.add(model);
+      void updateMaterials();
     });
 
     const animate = () => {
@@ -121,16 +209,26 @@ function GloveViewer() {
 
   const getColorForMesh = (name: string) => {
     switch (name) {
-      case 'Fingers':       return glove.fingersColor;
-      case 'InnerPalm':     return glove.innerPalmColor;
-      case 'OutterPalm':    return glove.outerPalmColor;
-      case 'InnerThumb':    return glove.innerThumbColor;
-      case 'OutterThumb':   return glove.outerThumbColor;
-      case 'Strap':         return glove.strapColor;
-      case 'Wrist':         return glove.wristColor;
-      case 'WristOutline':  return glove.wristOutlineColor;
-      case 'Outline':       return glove.outlineColor;
-      default:              return glove.mainColor;
+      case 'Fingers':
+        return glove.fingersColor;
+      case 'InnerPalm':
+        return glove.innerPalmColor;
+      case 'OutterPalm':
+        return glove.outerPalmColor;
+      case 'InnerThumb':
+        return glove.innerThumbColor;
+      case 'OutterThumb':
+        return glove.outerThumbColor;
+      case 'Strap':
+        return glove.strapColor;
+      case 'Wrist':
+        return glove.wristColor;
+      case 'WristOutline':
+        return glove.wristOutlineColor;
+      case 'Outline':
+        return glove.outlineColor;
+      default:
+        return glove.mainColor;
     }
   };
 
@@ -147,33 +245,31 @@ function GloveViewer() {
 
     // Collect overlays for this zone (if any)
     const zone = isZone(name) ? name : undefined;
-    const z = zone ? textZones[zone] : undefined;
+    const z = zone ? (textZones[zone] as TextSettings) : undefined;
     const txt = z?.text ?? '';
-    const imgs = zone ? (customImages[zone] ?? []) : [];
+    const imgs: CustomImage[] = zone ? (customImages[zone] ?? []) : [];
 
-    imgs.forEach((image: any) => {
+    imgs.forEach((image) => {
       if (!image.transform) {
         image.transform = { x: 0, y: 0, scale: 1, rotation: 0 };
       }
     });
 
-    // Build map: if there is text or images, composite them on top of a flat bg
+    // Base albedo map (with text/images baked in)
     if (txt || imgs.length > 0) {
       const texture = await generateTextTexture({
         text: txt,
         font: z?.font,
         size: z?.size,
         textColor: z?.color,
-        bgColor: bgHex,         // only background color is used from GloveColor
+        bgColor: bgHex,
         x: z?.x,
         y: z?.y,
         rotation: z?.rotation,
-        images: imgs
-        // IMPORTANT: no finish/gloss/glow passed here (texts stay normal)
+        images: imgs,
       });
       material.map = texture;
     } else {
-      // No overlays: 2x2 flat texture in the selected color
       const canvas = document.createElement('canvas');
       canvas.width = canvas.height = 2;
       const ctx = canvas.getContext('2d')!;
@@ -182,8 +278,27 @@ function GloveViewer() {
       material.map = new THREE.CanvasTexture(canvas);
     }
 
-    // Apply PBR finish based on the color selection ONLY
+    // Apply PBR finish based on the selected color ONLY
     applyFinish(material, c);
+
+    // ---- Mask out text & images from the finish so they stay plain ----
+    material.emissiveMap = null as any;
+    material.metalnessMap = null as any;
+
+    if (txt || imgs.length > 0) {
+      const mask = await buildMaskTexture(z, imgs);
+
+      if (c.finish === 'fluorescent') {
+        // Glow only on background (white in mask)
+        material.emissiveMap = mask;
+      }
+      if (c.finish === 'metallic') {
+        // Metalness only on background (white in mask)
+        material.metalnessMap = mask;
+      }
+    }
+    // -------------------------------------------------------------------
+
     material.needsUpdate = true;
   };
 
@@ -203,10 +318,7 @@ function GloveViewer() {
   }, [glove, textZones, customImages]);
 
   return (
-    <div
-      ref={mountRef}
-      style={{ width: '100%', height: '100%', backgroundColor: '#111' }}
-    />
+    <div ref={mountRef} style={{ width: '100%', height: '100%', backgroundColor: '#111' }} />
   );
 }
 
