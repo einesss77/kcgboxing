@@ -1,4 +1,4 @@
-export type Finish = 'solid' | 'metallic' | 'fluorescent';
+export type Finish = 'solid' | 'metallic' | 'fluorescent' | 'matte';
 
 export interface GloveColor {
   name: string;
