@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 
 // ===== New: finishes =====
-export type Finish = 'solid' | 'metallic' | 'fluorescent';
+export type Finish = 'solid' | 'metallic' | 'fluorescent' | 'matte'; // ← added 'matte'
 
 export interface GloveColor {
   name: string;
@@ -67,7 +67,7 @@ export interface TextSettings {
   y: number;
 
   // Optional finish for text rendering on the canvas
-  finish?: Finish; // 'solid' | 'metallic' | 'fluorescent'
+  finish?: Finish; // 'solid' | 'metallic' | 'fluorescent' | 'matte'
   gloss?: number;  // 0..1 (metallic intensity)
   glow?: number;   // 0..1 (fluorescent intensity)
 }
@@ -210,14 +210,13 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
 
   // Use spreads so any new defaults (finish/gloss/glow) propagate automatically
   textZones: {
- Wrist: { text: '', font: 'Arial', color: '#FFFFFF', size: 36, rotation: 90, x: 260, y: 360 },
+    Wrist: { text: '', font: 'Arial', color: '#FFFFFF', size: 36, rotation: 90, x: 260, y: 360 },
     InnerThumb: { text: '', font: 'Arial', color: '#FFFFFF', size: 28, rotation: 300, x: 250, y: 220 },
     OutterThumb: { text: '', font: 'Arial', color: '#FFFFFF', size: 70, rotation: 30, x: 180, y: 230 },
     InnerPalm: { text: '', font: 'Arial', color: '#FFFFFF', size: 36, rotation: 0, x: 200, y: 110 },
     OutterPalm: { text: '', font: 'Arial', color: '#FFFFFF', size: 32, rotation: 0, x: 350, y: 400 },
     Strap: { text: '', font: 'Arial', color: '#FFFFFF', size: 32, rotation: 90, x: 110, y: 450 },
     WristOutline: { text: '', font: 'Arial', color: '#FFFFFF', size: 64, rotation: 0, x: 256, y: 256 },
-
   },
 
   customImages: zones.reduce((acc, zone) => {
@@ -243,18 +242,13 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
 
   updateTextZone: (zone, updates) => {
     set((state) => {
-      const updated = {
-        ...state.textZones[zone],
-        ...updates,
-      };
-
       const updatedZones: Record<Zone, TextSettings> = {
         ...state.textZones,
         [zone]: {
           ...state.textZones[zone],
           ...updates,
         },
-       };
+      };
 
       // Mirror Strap settings to WristOutline (as before)
       if (zone === 'Strap') {
@@ -315,7 +309,7 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
 
       if (zone === 'Strap') {
         updatedImages.WristOutline = state.customImages.WristOutline.map((img) =>
-         img.id === imageId ? { ...img, transform } : img
+          img.id === imageId ? { ...img, transform } : img
         );
       }
 
