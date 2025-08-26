@@ -8,10 +8,10 @@ import { useCustomizationStore } from '../store/customizationStore';
 import type { CustomImage, TextSettings } from '../store/customizationStore';
 import { generateTextTexture } from '../utils/GenerateTextTexture';
 
-// Apply finish ONLY from color (metallic/fluorescent/solid)
+// Apply finish ONLY from color (metallic/fluorescent/matte/solid)
 function applyFinish(
   mat: THREE.MeshStandardMaterial,
-  c: { hex: string; finish?: 'solid' | 'metallic' | 'fluorescent'; glow?: number }
+  c: { hex: string; finish?: 'solid' | 'metallic' | 'fluorescent' | 'matte'; glow?: number }
 ) {
   const base = new THREE.Color(c.hex);
 
@@ -33,6 +33,10 @@ function applyFinish(
       mat.roughness = 0.35;
       mat.emissive.copy(base);
       mat.emissiveIntensity = Math.min(1.2, Math.max(0.2, c.glow ?? 0.9));
+      break;
+    case 'matte':
+      mat.metalness = 0.0;
+      mat.roughness = 0.9; // very diffuse, non-glossy
       break;
     default:
       // solid
@@ -209,26 +213,16 @@ function GloveViewer() {
 
   const getColorForMesh = (name: string) => {
     switch (name) {
-      case 'Fingers':
-        return glove.fingersColor;
-      case 'InnerPalm':
-        return glove.innerPalmColor;
-      case 'OutterPalm':
-        return glove.outerPalmColor;
-      case 'InnerThumb':
-        return glove.innerThumbColor;
-      case 'OutterThumb':
-        return glove.outerThumbColor;
-      case 'Strap':
-        return glove.strapColor;
-      case 'Wrist':
-        return glove.wristColor;
-      case 'WristOutline':
-        return glove.wristOutlineColor;
-      case 'Outline':
-        return glove.outlineColor;
-      default:
-        return glove.mainColor;
+      case 'Fingers':       return glove.fingersColor;
+      case 'InnerPalm':     return glove.innerPalmColor;
+      case 'OutterPalm':    return glove.outerPalmColor;
+      case 'InnerThumb':    return glove.innerThumbColor;
+      case 'OutterThumb':   return glove.outerThumbColor;
+      case 'Strap':         return glove.strapColor;
+      case 'Wrist':         return glove.wristColor;
+      case 'WristOutline':  return glove.wristOutlineColor;
+      case 'Outline':       return glove.outlineColor;
+      default:              return glove.mainColor;
     }
   };
 
@@ -296,6 +290,7 @@ function GloveViewer() {
         // Metalness only on background (white in mask)
         material.metalnessMap = mask;
       }
+      // 'matte' and 'solid' need no maps
     }
     // -------------------------------------------------------------------
 
