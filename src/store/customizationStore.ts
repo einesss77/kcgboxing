@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 
 // ===== New: finishes =====
-export type Finish = 'solid' | 'metallic' | 'fluorescent' | 'matte'; // ← added 'matte'
+export type Finish = 'solid' | 'metallic' | 'fluorescent' | 'matte';
 
 export interface GloveColor {
   name: string;
@@ -242,6 +242,11 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
 
   updateTextZone: (zone, updates) => {
     set((state) => {
+      const updated = {
+        ...state.textZones[zone],
+        ...updates,
+      };
+
       const updatedZones: Record<Zone, TextSettings> = {
         ...state.textZones,
         [zone]: {
