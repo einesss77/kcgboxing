@@ -153,6 +153,12 @@ const defaultImageTransform: ImageTransform = {
   rotation: 0,
 };
 
+// >>> NEW: per-zone defaults for NEW uploads (JSON loads still keep their own transforms)
+const zoneImageDefaults: Partial<Record<Zone, ImageTransform>> = {
+  Strap:      { x: 20, y: 198, scale: 0.21, rotation: 90 },
+  OutterPalm: { x: 94, y: 80,  scale: 0.21, rotation: 0  },
+};
+
 const zones: Zone[] = [
   'Wrist',
   'InnerThumb',
@@ -269,7 +275,11 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
 
   addCustomImage: (zone, url, options) => {
     const id = options?.id ?? uuidv4();
-    const transform: ImageTransform = options?.transform ?? { ...defaultImageTransform };
+
+    // If transform is provided (e.g., from JSON), use it; otherwise use per-zone default.
+    const baseDefault = zoneImageDefaults[zone] ?? defaultImageTransform;
+    const transform: ImageTransform = options?.transform ?? { ...baseDefault };
+
     const newImage: CustomImage = { id, url, transform };
 
     set((state) => {
