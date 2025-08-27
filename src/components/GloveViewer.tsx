@@ -218,9 +218,9 @@ function GloveViewer() {
       case 'OutterPalm':    return glove.outerPalmColor;
       case 'InnerThumb':    return glove.innerThumbColor;
       case 'OutterThumb':   return glove.outerThumbColor;
-      case 'Strap':         return glove.strapColor;
+      case 'WristOutline':         return glove.strapColor;
       case 'Wrist':         return glove.wristColor;
-      case 'WristOutline':  return glove.wristOutlineColor;
+      case 'Strap':  return glove.wristOutlineColor;
       case 'Outline':       return glove.outlineColor;
       default:              return glove.mainColor;
     }
