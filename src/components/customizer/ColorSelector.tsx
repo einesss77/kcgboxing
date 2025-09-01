@@ -86,17 +86,18 @@ const ColorSelector: React.FC = () => {
   const { glove, updateColor } = useCustomizationStore();
 
   // Match your CustomGlove fields exactly
-  const sections = [
-    { id: 'fingers',      label: 'Fingers',       color: glove.fingersColor },
-    { id: 'innerPalm',    label: 'Inner Palm',    color: glove.innerPalmColor },
-    { id: 'outerPalm',    label: 'Outer Palm',    color: glove.outerPalmColor },
-    { id: 'innerThumb',   label: 'Inner Thumb',   color: glove.innerThumbColor },
-    { id: 'outerThumb',   label: 'Outer Thumb',   color: glove.outerThumbColor },
-    { id: 'strap',        label: 'Strap',         color: glove.strapColor },           // ← fixed label
-    { id: 'wrist',        label: 'Wrist',         color: glove.wristColor },
-    { id: 'wristOutline', label: 'Wrist Outline', color: glove.wristOutlineColor },    // ← fixed label
-    { id: 'outline',      label: 'Outline',       color: glove.outlineColor },
-  ] as const;
+ const sections = [
+  { id: 'outerPalm',    label: 'Outer Palm',    color: glove.outerPalmColor },
+  { id: 'innerPalm',    label: 'Inner Palm',    color: glove.innerPalmColor },
+  { id: 'fingers',      label: 'Fingers',       color: glove.fingersColor },
+  { id: 'outerThumb',   label: 'Outer Thumb',   color: glove.outerThumbColor },
+  { id: 'innerThumb',   label: 'Inner Thumb',   color: glove.innerThumbColor },
+  { id: 'wrist',        label: 'Wrist',         color: glove.wristColor },
+  { id: 'strap',        label: 'Strap',         color: glove.strapColor },
+  { id: 'wristOutline', label: 'Wrist Outline', color: glove.wristOutlineColor },
+  { id: 'outline',      label: 'Outline',       color: glove.outlineColor },
+] as const;
+
 
   return (
     <div className="space-y-8">
