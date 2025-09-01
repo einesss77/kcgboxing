@@ -1,12 +1,12 @@
 import { useCustomizationStore } from '../../store/customizationStore';
 
 const zones = [
-  'Wrist',
-  'InnerThumb',
-  'OutterThumb',
+  'OutterPalm',  // biggest visible area
   'InnerPalm',
-  'OutterPalm',
-  'Strap',
+  'OutterThumb',
+  'InnerThumb',
+  'Wrist',
+  'Strap',       // mirrored to WristOutline in your store
 ] as const;
 
 type Zone = (typeof zones)[number];
