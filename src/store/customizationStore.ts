@@ -127,8 +127,8 @@ interface CustomizationState {
 
 // ===== Defaults with finishes =====
 const defaultColor: GloveColor = {
-  name: 'Classic Black',
-  hex: '#000000',
+  name: 'Classic White',
+  hex: '#FFFFFF',
   price: 0,
   finish: 'solid', // default finish for colors
 };
