@@ -195,4 +195,4 @@ const getImageAttachmentsFromItems = async (items) => {
     });
 
     return attachments;
-};  voici mon ancien index just repond ok 
+};
