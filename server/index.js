@@ -1,4 +1,3 @@
-
 // server/index.js
 import express from 'express';
 import prisma from './prismaClient.js';
@@ -10,190 +9,197 @@ dotenv.config();
 
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2022-11-15',
+  apiVersion: '2022-11-15',
 });
 
 app.use(cors({ origin: process.env.FRONTEND_URL }));
 app.use(express.json());
 
 app.post('/create-checkout-session', async (req, res) => {
-    try {
-        const { items, customer } = req.body;
+  try {
+    const { items, customer } = req.body;
 
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            mode: 'payment',
-            line_items: items.map((item) => ({
-                price_data: {
-                    currency: 'eur',
-                    product_data: {
-                        name: 'Custom Glove',
-                        description: `Size: ${item.glove.size}`,
-                        images: [item.image],
-                    },
-                    unit_amount: Math.round(item.price * 100),
-                },
-                quantity: item.quantity,
-            })),
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'payment',
+      line_items: items.map((item) => ({
+        price_data: {
+          currency: 'eur',
+          product_data: {
+            name: 'Custom Glove',
+            description: `Size: ${item.glove.size}`,
+            images: [item.image],
+          },
+          unit_amount: Math.round(item.price * 100),
+        },
+        quantity: item.quantity,
+      })),
+      success_url: `${process.env.FRONTEND_URL}/success`,
+      cancel_url: `${process.env.FRONTEND_URL}/cart`,
+    });
 
-            success_url: `${process.env.FRONTEND_URL}/success`,
-            cancel_url: `${process.env.FRONTEND_URL}/cart`,
-        });
-        await sendOrderEmail(items, customer);
-        // Sauvegarde dans la base
-        await fetch(`${process.env.BACKEND_URL}/save-order`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                customer,
-                items,
-            }),
-        });
+    await sendOrderEmail(items, customer);
 
+    // Save to DB
+    await fetch(`${process.env.BACKEND_URL}/save-order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer,
+        items,
+      }),
+    });
 
-
-        console.log("📧 Fonction sendOrderEmail appelée avec :", items);
-        res.json({ url: session.url });
-    } catch (err) {
-        console.error("Erreur Stripe :", err);
-        res.status(500).json({ error: "Erreur lors de la création de session" });
-    }
+    console.log('📧 sendOrderEmail called with:', items);
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Stripe error:', err);
+    res.status(500).json({ error: 'Error creating checkout session' });
+  }
 });
 
 app.listen(4242, () => {
-    console.log("✅ Server is running on http://localhost:4242");
+  console.log('✅ Server is running on http://localhost:4242');
 });
 
+/* -------------------------
+   Send Order Email
+   ------------------------- */
 const sendOrderEmail = async (items, customer) => {
-    try {
-        console.log("📦 Contenu de customer :", customer);
+  try {
+    console.log('📦 Customer payload:', customer);
 
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: 'einesbek@gmail.com',
-                pass: process.env.EMAIL_PASSWORD,
-            },
-        });
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'einesbek@gmail.com',
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
 
-        const item = items[0];
-        const glove = item.glove;
+    const item = items[0];
+    const glove = item.glove;
 
-        const html = `
-            <h2>Nouvelle commande reçue</h2>
+    const html = `
+      <h2>New order received</h2>
 
-            <h3>👤 Informations client</h3>
-            <ul>
-              <li><strong>Nom :</strong> ${customer.name}</li>
-              <li><strong>Email :</strong> ${customer.email}</li>
-              <li><strong>Téléphone :</strong> ${customer.phone}</li>
-              <li><strong>Adresse :</strong> ${customer.address}</li>
-            </ul>
+      <h3>👤 Customer Information</h3>
+      <p><strong>Name:</strong> ${customer.name || '-'}</p>
+      <p><strong>Email:</strong> ${customer.email || '-'}</p>
+      <p><strong>Phone:</strong> ${customer.phone || '-'}</p>
+      ${
+        (customer.street || customer.city || customer.postalCode || customer.country)
+          ? `
+            <p><strong>Street and number:</strong> ${customer.street || '-'}</p>
+            ${customer.address2 ? `<p><strong>Apartment/Building/Floor:</strong> ${customer.address2}</p>` : ''}
+            <p><strong>City:</strong> ${customer.city || '-'}</p>
+            <p><strong>State/Province/Region:</strong> ${customer.state || '-'}</p>
+            <p><strong>ZIP/Postal code:</strong> ${customer.postalCode || '-'}</p>
+            <p><strong>Country:</strong> ${customer.country || '-'}</p>
+          `
+          : `<p><strong>Address:</strong> ${customer.address || '-'}</p>`
+      }
 
-            <h3>🧤 Détails du gant</h3>
-            <ul>
-              <li><strong>Taille :</strong> ${glove.size}</li>
-              <li><strong>Matériau :</strong> ${glove.material.name} - ${glove.material.description}</li>
-              <li><strong>Quantité :</strong> ${item.quantity}</li>
-              <li><strong>Prix :</strong> ${item.price} €</li>
-            </ul>
+      <h3>🧤 Glove Details</h3>
+      <p><strong>Size:</strong> ${glove.size}</p>
+      <p><strong>Material:</strong> ${glove.material.name} - ${glove.material.description}</p>
+      <p><strong>Quantity:</strong> ${item.quantity}</p>
+      <p><strong>Price:</strong> ${item.price} €</p>
 
-            <h4>🎨 Couleurs :</h4>
-            <ul>
-              <li>Fingers : ${glove.fingersColor.name}</li>
-              <li>Outer Palm : ${glove.outerPalmColor.name}</li>
-              <li>Inner Palm : ${glove.innerPalmColor.name}</li>
-              <li>Inner Thumb : ${glove.innerThumbColor.name}</li>
-              <li>Outer Thumb : ${glove.outerThumbColor.name}</li>
-              <li>Strap : ${glove.strapColor.name}</li>
-              <li>Wrist : ${glove.wristColor.name}</li>
-              <li>Wrist Outline : ${glove.wristOutlineColor.name}</li>
-              <li>Outline : ${glove.outlineColor.name}</li>
-            </ul>
-        `;
+      <h4>🎨 Colors</h4>
+      <p>Fingers: ${glove.fingersColor.name}</p>
+      <p>Outer Palm: ${glove.outerPalmColor.name}</p>
+      <p>Inner Palm: ${glove.innerPalmColor.name}</p>
+      <p>Inner Thumb: ${glove.innerThumbColor.name}</p>
+      <p>Outer Thumb: ${glove.outerThumbColor.name}</p>
+      <p>Strap: ${glove.strapColor.name}</p>
+      <p>Wrist: ${glove.wristColor.name}</p>
+      <p>Wrist Outline: ${glove.wristOutlineColor.name}</p>
+      <p>Outline: ${glove.outlineColor.name}</p>
+    `;
 
-        const jsonAttachment = {
-            filename: `commande-${customer.name?.replace(/\s+/g, '-').toLowerCase() || 'client'}.json`,
-            content: JSON.stringify(items, null, 2),
-            contentType: 'application/json',
-        };
+    const jsonAttachment = {
+      filename: `order-${(customer.name || 'client').replace(/\s+/g, '-').toLowerCase()}.json`,
+      content: JSON.stringify(items, null, 2),
+      contentType: 'application/json',
+    };
 
-        const imageAttachments = await getImageAttachmentsFromItems(items);
+    const imageAttachments = await getImageAttachmentsFromItems(items);
 
-        const info = await transporter.sendMail({
-            from: '"Boutique Gants" <einesbek@gmail.com>',
-            to: ['einesbek@gmail.com', 'kcgboxing@gmail.com'],
-            subject: 'Nouvelle commande sur ton site',
-            html,
-            attachments: [jsonAttachment, ...imageAttachments],
-        });
+    const info = await transporter.sendMail({
+      from: '"Gloves Store" <einesbek@gmail.com>',
+      to: ['einesbek@gmail.com', 'kcgboxing@gmail.com'],
+      subject: 'New order on your site',
+      html,
+      attachments: [jsonAttachment, ...imageAttachments],
+    });
 
-        console.log("✅ Email envoyé :", info.messageId);
-    } catch (error) {
-        console.error("❌ Erreur envoi e-mail :", error);
-    }
+    console.log('✅ Email sent:', info.messageId);
+  } catch (error) {
+    console.error('❌ Email send error:', error);
+  }
 };
 
 app.post('/save-order', async (req, res) => {
-    try {
-        const { customer, items } = req.body;
+  try {
+    const { customer, items } = req.body;
 
-        const order = await prisma.order.create({
-            data: {
-                name: customer.name,
-                email: customer.email,
-                phone: customer.phone,
-                address: customer.address,
-                total: items.reduce((acc, item) => acc + item.price * item.quantity, 0),
-                items: {
-                    create: items.map((item) => ({
-                        gloveJson: item.glove, // tout l'objet glove complet
-                        quantity: item.quantity,
-                        price: item.price,
-                    })),
-                },
-            },
-        });
+    const order = await prisma.order.create({
+      data: {
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        address: customer.address,
+        total: items.reduce((acc, item) => acc + item.price * item.quantity, 0),
+        items: {
+          create: items.map((item) => ({
+            gloveJson: item.glove,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+        },
+      },
+    });
 
-        console.log("💾 Commande enregistrée en base :", order.id);
-        res.status(200).json({ success: true });
-    } catch (err) {
-        console.error("❌ Erreur DB :", err);
-        res.status(500).json({ error: "Erreur base de données" });
-    }
+    console.log('💾 Order saved:', order.id);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('❌ DB error:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 app.get('/admin/orders', async (req, res) => {
-    try {
-        const orders = await prisma.order.findMany({
-            orderBy: { createdAt: 'desc' },
-            include: { items: true },
-        });
-        res.json(orders);
-    } catch (err) {
-        console.error("❌ Erreur récupération commandes :", err);
-        res.status(500).json({ error: 'Erreur lors de la récupération des commandes.' });
-    }
+  try {
+    const orders = await prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { items: true },
+    });
+    res.json(orders);
+  } catch (err) {
+    console.error('❌ Fetch orders error:', err);
+    res.status(500).json({ error: 'Error fetching orders' });
+  }
 });
 
 const getImageAttachmentsFromItems = async (items) => {
-    const attachments = [];
+  const attachments = [];
 
-    items.forEach((item, index) => {
-        const customImages = item.customImages;
+  items.forEach((item, index) => {
+    const customImages = item.customImages;
 
-        if (customImages) {
-            for (const zone in customImages) {
-                customImages[zone].forEach((image, i) => {
-                    attachments.push({
-                        filename: `image-${index}-${zone}-${i}.png`,
-                        path: image.url,
-                        cid: `image-${index}-${zone}-${i}`, // optionnel, si tu veux les afficher dans le HTML un jour
-                    });
-                });
-            }
-        }
-    });
+    if (customImages) {
+      for (const zone in customImages) {
+        customImages[zone].forEach((image, i) => {
+          attachments.push({
+            filename: `image-${index}-${zone}-${i}.png`,
+            path: image.url,
+            cid: `image-${index}-${zone}-${i}`,
+          });
+        });
+      }
+    }
+  });
 
-    return attachments;
-};  
+  return attachments;
+};
