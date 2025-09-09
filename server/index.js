@@ -15,25 +15,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 app.use(cors({ origin: process.env.FRONTEND_URL }));
 app.use(express.json());
 
-/* -----------------------------
-   Address formatting helper
-   ----------------------------- */
-function formatFullAddressFromCustomer(customer) {
-  // If structured fields exist, build a multi-line address
-  if (customer?.street || customer?.city || customer?.postalCode || customer?.country) {
-    const lines = [
-      customer.street || '',
-      customer.address2 || '',
-      [customer.postalCode, customer.city].filter(Boolean).join(' '),
-      customer.state || '',
-      customer.country || '',
-    ].filter(Boolean);
-    return lines.join('\n');
-  }
-  // Fallback to the single address string
-  return customer?.address || '';
-}
-
 app.post('/create-checkout-session', async (req, res) => {
   try {
     const { items, customer } = req.body;
@@ -59,12 +40,12 @@ app.post('/create-checkout-session', async (req, res) => {
 
     await sendOrderEmail(items, customer);
 
-    // Save to DB (store a clean multi-line address)
+    // Save to DB
     await fetch(`${process.env.BACKEND_URL}/save-order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        customer: { ...customer, address: formatFullAddressFromCustomer(customer) },
+        customer,
         items,
       }),
     });
@@ -81,6 +62,9 @@ app.listen(4242, () => {
   console.log('✅ Server is running on http://localhost:4242');
 });
 
+/* -------------------------
+   Send Order Email
+   ------------------------- */
 const sendOrderEmail = async (items, customer) => {
   try {
     console.log('📦 Customer payload:', customer);
@@ -96,54 +80,42 @@ const sendOrderEmail = async (items, customer) => {
     const item = items[0];
     const glove = item.glove;
 
-    const fullAddress = formatFullAddressFromCustomer(customer);
-
     const html = `
       <h2>New order received</h2>
 
       <h3>👤 Customer Information</h3>
-      <ul>
-        <li><strong>Name:</strong> ${customer.name || '-'}</li>
-        <li><strong>Email:</strong> ${customer.email || '-'}</li>
-        <li><strong>Phone:</strong> ${customer.phone || '-'}</li>
-        ${
-          (customer.street || customer.city || customer.postalCode || customer.country)
-            ? `
-              <li><strong>Street:</strong> ${customer.street || '-'}</li>
-              ${customer.address2 ? `<li><strong>Address 2:</strong> ${customer.address2}</li>` : ''}
-              <li><strong>City:</strong> ${customer.city || '-'}</li>
-              <li><strong>State/Province:</strong> ${customer.state || '-'}</li>
-              <li><strong>Postal Code:</strong> ${customer.postalCode || '-'}</li>
-              <li><strong>Country:</strong> ${customer.country || '-'}</li>
-            `
-            : `<li><strong>Address:</strong> ${customer.address || '-'}</li>`
-        }
-      </ul>
-
-      <pre style="background:#111;padding:12px;border-radius:8px;white-space:pre-wrap;line-height:1.4;margin-top:8px">
-${fullAddress}
-      </pre>
+      <p><strong>Name:</strong> ${customer.name || '-'}</p>
+      <p><strong>Email:</strong> ${customer.email || '-'}</p>
+      <p><strong>Phone:</strong> ${customer.phone || '-'}</p>
+      ${
+        (customer.street || customer.city || customer.postalCode || customer.country)
+          ? `
+            <p><strong>Street and number:</strong> ${customer.street || '-'}</p>
+            ${customer.address2 ? `<p><strong>Apartment/Building/Floor:</strong> ${customer.address2}</p>` : ''}
+            <p><strong>City:</strong> ${customer.city || '-'}</p>
+            <p><strong>State/Province/Region:</strong> ${customer.state || '-'}</p>
+            <p><strong>ZIP/Postal code:</strong> ${customer.postalCode || '-'}</p>
+            <p><strong>Country:</strong> ${customer.country || '-'}</p>
+          `
+          : `<p><strong>Address:</strong> ${customer.address || '-'}</p>`
+      }
 
       <h3>🧤 Glove Details</h3>
-      <ul>
-        <li><strong>Size:</strong> ${glove.size}</li>
-        <li><strong>Material:</strong> ${glove.material.name} - ${glove.material.description}</li>
-        <li><strong>Quantity:</strong> ${item.quantity}</li>
-        <li><strong>Price:</strong> ${item.price} €</li>
-      </ul>
+      <p><strong>Size:</strong> ${glove.size}</p>
+      <p><strong>Material:</strong> ${glove.material.name} - ${glove.material.description}</p>
+      <p><strong>Quantity:</strong> ${item.quantity}</p>
+      <p><strong>Price:</strong> ${item.price} €</p>
 
       <h4>🎨 Colors</h4>
-      <ul>
-        <li>Fingers: ${glove.fingersColor.name}</li>
-        <li>Outer Palm: ${glove.outerPalmColor.name}</li>
-        <li>Inner Palm: ${glove.innerPalmColor.name}</li>
-        <li>Inner Thumb: ${glove.innerThumbColor.name}</li>
-        <li>Outer Thumb: ${glove.outerThumbColor.name}</li>
-        <li>Strap: ${glove.strapColor.name}</li>
-        <li>Wrist: ${glove.wristColor.name}</li>
-        <li>Wrist Outline: ${glove.wristOutlineColor.name}</li>
-        <li>Outline: ${glove.outlineColor.name}</li>
-      </ul>
+      <p>Fingers: ${glove.fingersColor.name}</p>
+      <p>Outer Palm: ${glove.outerPalmColor.name}</p>
+      <p>Inner Palm: ${glove.innerPalmColor.name}</p>
+      <p>Inner Thumb: ${glove.innerThumbColor.name}</p>
+      <p>Outer Thumb: ${glove.outerThumbColor.name}</p>
+      <p>Strap: ${glove.strapColor.name}</p>
+      <p>Wrist: ${glove.wristColor.name}</p>
+      <p>Wrist Outline: ${glove.wristOutlineColor.name}</p>
+      <p>Outline: ${glove.outlineColor.name}</p>
     `;
 
     const jsonAttachment = {
@@ -177,8 +149,7 @@ app.post('/save-order', async (req, res) => {
         name: customer.name,
         email: customer.email,
         phone: customer.phone,
-        // store a clean, multi-line address even if frontend sent a single field
-        address: customer.address || formatFullAddressFromCustomer(customer),
+        address: customer.address,
         total: items.reduce((acc, item) => acc + item.price * item.quantity, 0),
         items: {
           create: items.map((item) => ({
