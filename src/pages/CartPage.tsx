@@ -1,73 +1,19 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'; // en haut de ton fichier
 import { useCartStore } from '../store/cartStore';
 import { X, MinusCircle, PlusCircle, ShoppingBag, ArrowLeft } from 'lucide-react';
+import {useState} from "react";
 
-const CartPage = () => {
+const CartPage: React.FC = () => {
   const { items, removeFromCart, updateQuantity, getTotalPrice } = useCartStore();
-  const navigate = useNavigate();
-
-  const [customerInfo, setCustomerInfo] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    street: '',
-    city: '',
-    zip: '',
-    country: '',
-  });
-
   const isFormValid = () => {
     return (
-      customerInfo.name.trim() &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerInfo.email) &&
-      /^\d{8,15}$/.test(customerInfo.phone) &&
-      customerInfo.street.trim() &&
-      customerInfo.city.trim() &&
-      customerInfo.zip.trim() &&
-      customerInfo.country.trim()
+        customerInfo.name.trim() &&
+        customerInfo.email.trim() &&
+        customerInfo.phone.trim() &&
+        customerInfo.address.trim()
     );
-  };
-
-  const handleCheckout = async () => {
-    if (!isFormValid()) return;
-
-    try {
-      const customerData = {
-        customer: customerInfo,
-        order: items.map((item) => ({
-          name: "Custom Boxing Gloves",
-          quantity: item.quantity,
-          price: item.price,
-        })),
-        total: getTotalPrice(),
-      };
-
-      // Envoi au backend pour mail ou traitement
-      await fetch(`${import.meta.env.VITE_API_URL}/send-order-mail`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(customerData),
-      });
-
-      // Création de la session Stripe
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/create-checkout-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items, customer: customerInfo }),
-      });
-
-      const data = await res.json();
-      if (data?.url) {
-        sessionStorage.setItem('orderData', JSON.stringify(items));
-        window.location.href = data.url;
-      } else {
-        alert("Erreur lors de la création de la session de paiement.");
-      }
-    } catch (err) {
-      console.error("Erreur checkout :", err);
-      alert("Impossible de procéder au paiement.");
-    }
   };
 
   if (items.length === 0) {
@@ -89,6 +35,58 @@ const CartPage = () => {
       </div>
     );
   }
+  const [customerInfo, setCustomerInfo] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
+  });
+
+  const navigate = useNavigate();
+  const handleCheckout = async () => {
+    try {
+      // 1. Générer le JSON à envoyer par mail
+      const customerData = {
+        customer: customerInfo,
+        order: items.map((item) => ({
+          name: "Custom Boxing Gloves", // ou item.name si dispo
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        total: getTotalPrice(),
+      };
+
+      // 2. L’envoyer au backend pour l’envoi de mail
+      await fetch(`${import.meta.env.VITE_API_URL}/send-order-mail`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(customerData),
+      });
+      console.log("🧾 Infos client envoyées :", customerInfo);
+
+      // 3. Créer la session Stripe
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items, customer: customerInfo }),
+      });
+
+      const data = await res.json();
+      if (data?.url) {
+        sessionStorage.setItem('orderData', JSON.stringify(items));
+        window.location.href = data.url;
+      } else {
+        alert("Erreur lors de la création de la session de paiement.");
+      }
+
+    } catch (err) {
+      console.error("Erreur checkout :", err);
+      alert("Impossible de procéder au paiement.");
+    }
+  };
+
+
+
 
   return (
     <div className="pt-24 pb-16 container-custom">
@@ -111,7 +109,10 @@ const CartPage = () => {
               </div>
 
               {items.map((item) => (
-                <div key={item.id} className="grid grid-cols-12 items-start py-6 border-b border-neutral-700">
+                <div 
+                  key={item.id} 
+                  className="grid grid-cols-12 items-start py-6 border-b border-neutral-700"
+                >
                   <div className="col-span-6 flex gap-4">
                     <div className="bg-neutral-700 rounded-lg h-24 w-24 flex items-center justify-center overflow-hidden">
                       <div
@@ -133,28 +134,78 @@ const CartPage = () => {
                         <li>Strap: {item.glove?.strapColor?.name || '—'}</li>
                         <li>Wrist: {item.glove?.wristColor?.name || '—'}</li>
                       </ul>
+
+                      {/* ✅ Texts */}
+                      {item.textZones && (
+                        <div className="mt-2 text-xs text-neutral-400">
+                          <p className="font-medium">Texts:</p>
+                          <ul className="list-disc ml-4 space-y-1">
+                            {Object.entries(item.textZones).map(([zone, text]) =>
+                              text?.text ? (
+                                <li key={zone}>
+                                  {zone}: "{text.text}" (color: {text.color}, size: {text.size})
+                                </li>
+                              ) : null
+                            )}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* ✅ Images */}
+                      {item.customImages && (
+                        <div className="mt-2 text-xs text-neutral-400">
+                          <p className="font-medium">Images:</p>
+                          <ul className="list-disc ml-4 space-y-1">
+                            {Object.entries(item.customImages).map(([zone, images]) =>
+                              images.length > 0 ? (
+                                <li key={zone}>
+                                  {zone}:
+                                  <div className="flex gap-2 mt-1">
+                                    {images.map((img) => (
+                                      <img
+                                        key={img.id}
+                                        src={img.url}
+                                        alt={`custom ${zone}`}
+                                        className="h-8 w-8 object-cover rounded border"
+                                      />
+                                    ))}
+                                  </div>
+                                </li>
+                              ) : null
+                            )}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <div className="col-span-2 text-center">${Number(item.price || 0).toFixed(2)}</div>
+                  <div className="col-span-2 text-center">
+                    ${Number(item.price || 0).toFixed(2)}
+                  </div>
 
                   <div className="col-span-2 flex items-center justify-center gap-2">
-                    <button onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                            className="text-neutral-400 hover:text-white transition-colors">
+                    <button
+                      onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                      className="text-neutral-400 hover:text-white transition-colors"
+                    >
                       <MinusCircle className="h-4 w-4" />
                     </button>
                     <span>{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="text-neutral-400 hover:text-white transition-colors">
+                    <button
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      className="text-neutral-400 hover:text-white transition-colors"
+                    >
                       <PlusCircle className="h-4 w-4" />
                     </button>
                   </div>
 
                   <div className="col-span-2 text-right flex items-center justify-end gap-4">
                     <span>${(Number(item.price || 0) * Number(item.quantity || 1)).toFixed(2)}</span>
-                    <button onClick={() => removeFromCart(item.id)}
-                            className="text-neutral-500 hover:text-red-500 transition-colors"
-                            aria-label="Remove item">
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      className="text-neutral-500 hover:text-red-500 transition-colors"
+                      aria-label="Remove item"
+                    >
                       <X className="h-5 w-5" />
                     </button>
                   </div>
@@ -190,36 +241,48 @@ const CartPage = () => {
                 <span>${Number(getTotalPrice() || 0).toFixed(2)}</span>
               </div>
             </div>
-
-            <div className="space-y-3 mb-6">
+            <div className="space-y-4 mb-6">
               <h3 className="text-lg font-semibold text-white">Informations client</h3>
-              <input type="text" placeholder="Full Name" value={customerInfo.name}
-                     onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
-                     className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400" />
-              <input type="email" placeholder="Email" value={customerInfo.email}
-                     onChange={(e) => setCustomerInfo({...customerInfo, email: e.target.value})}
-                     className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400" />
-              <input type="tel" placeholder="Phone number" value={customerInfo.phone}
-                     onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
-                     className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400" />
-              <input type="text" placeholder="Street address" value={customerInfo.street}
-                     onChange={(e) => setCustomerInfo({...customerInfo, street: e.target.value})}
-                     className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400" />
-              <input type="text" placeholder="City" value={customerInfo.city}
-                     onChange={(e) => setCustomerInfo({...customerInfo, city: e.target.value})}
-                     className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400" />
-              <input type="text" placeholder="ZIP / Postal code" value={customerInfo.zip}
-                     onChange={(e) => setCustomerInfo({...customerInfo, zip: e.target.value})}
-                     className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400" />
-              <input type="text" placeholder="Country" value={customerInfo.country}
-                     onChange={(e) => setCustomerInfo({...customerInfo, country: e.target.value})}
-                     className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400" />
+              <input
+                  type="text"
+                  placeholder="Full Name"
+                  value={customerInfo.name}
+                  onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
+                  className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
+              />
+              <input
+                  type="email"
+                  placeholder="Email"
+                  value={customerInfo.email}
+                  onChange={(e) => setCustomerInfo({...customerInfo, email: e.target.value})}
+                  className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
+              />
+              <input
+                  type="tel"
+                  placeholder="Phone number"
+                  value={customerInfo.phone}
+                  onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
+                  className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
+              />
+              <input
+                  type="text"
+                  placeholder="Delivery address"
+                  value={customerInfo.address}
+                  onChange={(e) => setCustomerInfo({...customerInfo, address: e.target.value})}
+                  className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
+              />
             </div>
 
-            <button className={`btn btn-primary w-full py-3 ${!isFormValid() ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    onClick={handleCheckout} disabled={!isFormValid()}>
+            <button
+                className={`btn btn-primary w-full py-3 ${
+                    !isFormValid() ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                onClick={handleCheckout}
+                disabled={!isFormValid()}
+            >
               Proceed to Checkout
             </button>
+
 
             <div className="mt-6 text-sm text-neutral-400 text-center">
               <p>Free Shipping Worldwide</p>
@@ -232,4 +295,4 @@ const CartPage = () => {
   );
 };
 
-export default CartPage;
+export default CartPage; 
