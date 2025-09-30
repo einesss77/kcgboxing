@@ -66,7 +66,7 @@ const CartPage: React.FC = () => {
             onClick={() => (window.location.href = '/customize')}
             className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-3 px-6 rounded-lg text-lg transition"
           >
-            Acheter maintenant
+            Buy now
           </button>
         </div>
       </div>
