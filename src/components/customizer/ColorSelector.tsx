@@ -3,7 +3,7 @@ import { useCustomizationStore } from '../../store/customizationStore';
 import type { GloveColor } from '../../store/customizationStore'; // ← use store type to include finish/matte
 
 /* Optional: set surcharges here */
-const METALLIC_SURCHARGE = 9.99;
+const METALLIC_SURCHARGE = 9;
 const MATTE_SURCHARGE = 0;
 
 // === Color palette with finishes ===
