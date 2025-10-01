@@ -1,19 +1,56 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom'; // en haut de ton fichier
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCartStore } from '../store/cartStore';
 import { X, MinusCircle, PlusCircle, ShoppingBag, ArrowLeft } from 'lucide-react';
-import {useState} from "react";
 
 const CartPage: React.FC = () => {
   const { items, removeFromCart, updateQuantity, getTotalPrice } = useCartStore();
+
+  // ---------------------------
+  // Adresse structurée (GRATUIT)
+  // ---------------------------
+  const [customerInfo, setCustomerInfo] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    street: '',    // ex: 221B Baker Street
+    address2: '',  // Apt / Bâtiment / Étage (optionnel)
+    city: '',
+    state: '',     // Région / Province / État
+    postalCode: '',
+    country: 'AE', // Par défaut: EAU (mets 'FR' si tu préfères)
+  });
+
+  // Validation code postal selon pays (basique mais efficace)
+  const validatePostal = (country: string, postal: string) => {
+    const p = (postal || '').trim();
+    if (country === 'FR') return /^\d{5}$/.test(p);
+    if (country === 'US') return /^\d{5}(-\d{4})?$/.test(p);
+    if (country === 'GB') return /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i.test(p);
+    if (country === 'AE') return true; // pas de CP standard aux EAU
+    return p.length >= 3; // fallback simple
+  };
+
   const isFormValid = () => {
     return (
-        customerInfo.name.trim() &&
-        customerInfo.email.trim() &&
-        customerInfo.phone.trim() &&
-        customerInfo.address.trim()
+      customerInfo.name.trim() &&
+      customerInfo.email.trim() &&
+      customerInfo.phone.trim() &&
+      customerInfo.street.trim() &&
+      customerInfo.city.trim() &&
+      customerInfo.country.trim() &&
+      validatePostal(customerInfo.country, customerInfo.postalCode)
     );
+  };
+
+  // Concatène proprement pour l’email + DB (tu gardes "address" en String côté serveur)
+  const formatAddress = (c: typeof customerInfo) => {
+    const line2 = c.address2?.trim() ? `\n${c.address2.trim()}` : '';
+    const postalLine = c.postalCode?.trim()
+      ? `${c.postalCode.trim()} ${c.city.trim()}`
+      : c.city.trim();
+    const stateLine = c.state?.trim() ? `\n${c.state.trim()}` : '';
+    return `${c.street.trim()}${line2}\n${postalLine}${stateLine}\n${c.country}`;
   };
 
   if (items.length === 0) {
@@ -25,50 +62,56 @@ const CartPage: React.FC = () => {
           <p className="text-neutral-400 mb-8 max-w-md">
             Looks like you haven't added any custom gloves to your cart yet.
           </p>
-          <button 
-            onClick={() => window.location.href = "/customize"}
+          <button
+            onClick={() => (window.location.href = '/customize')}
             className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-3 px-6 rounded-lg text-lg transition"
           >
-            Acheter maintenant
+            Buy now
           </button>
         </div>
       </div>
     );
   }
-  const [customerInfo, setCustomerInfo] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: ''
-  });
 
   const navigate = useNavigate();
+
   const handleCheckout = async () => {
     try {
-      // 1. Générer le JSON à envoyer par mail
+      if (!isFormValid()) {
+        alert('Merci de remplir correctement les informations de livraison.');
+        return;
+      }
+
+      // 1) Payload pour email + back
+      const customer = {
+        name: customerInfo.name,
+        email: customerInfo.email,
+        phone: customerInfo.phone,
+        address: formatAddress(customerInfo), // 👈 String formatée multi-lignes
+      };
+
       const customerData = {
-        customer: customerInfo,
+        customer,
         order: items.map((item) => ({
-          name: "Custom Boxing Gloves", // ou item.name si dispo
+          name: 'Custom Boxing Gloves',
           quantity: item.quantity,
           price: item.price,
         })),
         total: getTotalPrice(),
       };
 
-      // 2. L’envoyer au backend pour l’envoi de mail
+      // 2) Envoi email (si route exposée)
       await fetch(`${import.meta.env.VITE_API_URL}/send-order-mail`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(customerData),
       });
-      console.log("🧾 Infos client envoyées :", customerInfo);
 
-      // 3. Créer la session Stripe
+      // 3) Création session Stripe
       const res = await fetch(`${import.meta.env.VITE_API_URL}/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items, customer: customerInfo }),
+        body: JSON.stringify({ items, customer }),
       });
 
       const data = await res.json();
@@ -76,28 +119,28 @@ const CartPage: React.FC = () => {
         sessionStorage.setItem('orderData', JSON.stringify(items));
         window.location.href = data.url;
       } else {
-        alert("Erreur lors de la création de la session de paiement.");
+        alert('Erreur lors de la création de la session de paiement.');
       }
-
     } catch (err) {
-      console.error("Erreur checkout :", err);
-      alert("Impossible de procéder au paiement.");
+      console.error('Erreur checkout :', err);
+      alert('Impossible de procéder au paiement.');
     }
   };
-
-
-
 
   return (
     <div className="pt-24 pb-16 container-custom">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl md:text-3xl font-bold">Shopping Cart</h1>
-        <Link to="/customize" className="text-neutral-400 hover:text-white flex items-center gap-2 transition-colors">
+        <Link
+          to="/customize"
+          className="text-neutral-400 hover:text-white flex items-center gap-2 transition-colors"
+        >
           <ArrowLeft className="h-4 w-4" /> Continue Shopping
         </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* --------- ITEMS LIST --------- */}
         <div className="lg:col-span-2">
           <div className="bg-neutral-800 rounded-xl overflow-hidden">
             <div className="p-6">
@@ -109,16 +152,13 @@ const CartPage: React.FC = () => {
               </div>
 
               {items.map((item) => (
-                <div 
-                  key={item.id} 
-                  className="grid grid-cols-12 items-start py-6 border-b border-neutral-700"
-                >
+                <div key={item.id} className="grid grid-cols-12 items-start py-6 border-b border-neutral-700">
                   <div className="col-span-6 flex gap-4">
                     <div className="bg-neutral-700 rounded-lg h-24 w-24 flex items-center justify-center overflow-hidden">
                       <div
                         className="h-16 w-16 rounded shadow-inner border border-white"
                         style={{
-                          background: `linear-gradient(135deg, ${item.glove?.fingersColor?.hex || '#111'}, ${item.glove?.outerPalmColor?.hex || '#333'})`
+                          background: `linear-gradient(135deg, ${item.glove?.fingersColor?.hex || '#111'}, ${item.glove?.outerPalmColor?.hex || '#333'})`,
                         }}
                         title="Glove preview"
                       />
@@ -135,7 +175,7 @@ const CartPage: React.FC = () => {
                         <li>Wrist: {item.glove?.wristColor?.name || '—'}</li>
                       </ul>
 
-                      {/* ✅ Texts */}
+                      {/* Texts */}
                       {item.textZones && (
                         <div className="mt-2 text-xs text-neutral-400">
                           <p className="font-medium">Texts:</p>
@@ -151,17 +191,17 @@ const CartPage: React.FC = () => {
                         </div>
                       )}
 
-                      {/* ✅ Images */}
+                      {/* Images */}
                       {item.customImages && (
                         <div className="mt-2 text-xs text-neutral-400">
                           <p className="font-medium">Images:</p>
                           <ul className="list-disc ml-4 space-y-1">
                             {Object.entries(item.customImages).map(([zone, images]) =>
-                              images.length > 0 ? (
+                              (images as any[]).length > 0 ? (
                                 <li key={zone}>
                                   {zone}:
                                   <div className="flex gap-2 mt-1">
-                                    {images.map((img) => (
+                                    {(images as any[]).map((img: any) => (
                                       <img
                                         key={img.id}
                                         src={img.url}
@@ -211,11 +251,11 @@ const CartPage: React.FC = () => {
                   </div>
                 </div>
               ))}
-
             </div>
           </div>
         </div>
 
+        {/* --------- SUMMARY + CLIENT INFO --------- */}
         <div>
           <div className="bg-neutral-800 rounded-xl p-6">
             <h2 className="text-xl font-bold mb-4">Order Summary</h2>
@@ -241,48 +281,98 @@ const CartPage: React.FC = () => {
                 <span>${Number(getTotalPrice() || 0).toFixed(2)}</span>
               </div>
             </div>
+
+            {/* --------- CLIENT INFO --------- */}
             <div className="space-y-4 mb-6">
               <h3 className="text-lg font-semibold text-white">Informations client</h3>
+
               <input
+                type="text"
+                placeholder="Full Name"
+                value={customerInfo.name}
+                onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
+                className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={customerInfo.email}
+                onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
+                className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
+              />
+              <input
+                type="tel"
+                placeholder="Phone number"
+                value={customerInfo.phone}
+                onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
+                className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
+              />
+
+              {/* Adresse structurée */}
+              <input
+                type="text"
+                placeholder="Street and number (e.g., 221B Baker Street)"
+                value={customerInfo.street}
+                onChange={(e) => setCustomerInfo({ ...customerInfo, street: e.target.value })}
+                className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
+              />
+              <input
+                type="text"
+                placeholder="Apartment / Building / Floor (optional)"
+                value={customerInfo.address2}
+                onChange={(e) => setCustomerInfo({ ...customerInfo, address2: e.target.value })}
+                className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input
                   type="text"
-                  placeholder="Full Name"
-                  value={customerInfo.name}
-                  onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
+                  placeholder="City"
+                  value={customerInfo.city}
+                  onChange={(e) => setCustomerInfo({ ...customerInfo, city: e.target.value })}
                   className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
-              />
-              <input
-                  type="email"
-                  placeholder="Email"
-                  value={customerInfo.email}
-                  onChange={(e) => setCustomerInfo({...customerInfo, email: e.target.value})}
-                  className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
-              />
-              <input
-                  type="tel"
-                  placeholder="Phone number"
-                  value={customerInfo.phone}
-                  onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
-                  className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
-              />
-              <input
+                />
+                <input
                   type="text"
-                  placeholder="Delivery address"
-                  value={customerInfo.address}
-                  onChange={(e) => setCustomerInfo({...customerInfo, address: e.target.value})}
+                  placeholder="State / Province / Region"
+                  value={customerInfo.state}
+                  onChange={(e) => setCustomerInfo({ ...customerInfo, state: e.target.value })}
                   className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
-              />
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="ZIP / Postal code"
+                  value={customerInfo.postalCode}
+                  onChange={(e) => setCustomerInfo({ ...customerInfo, postalCode: e.target.value })}
+                  className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
+                />
+                <select
+                  value={customerInfo.country}
+                  onChange={(e) => setCustomerInfo({ ...customerInfo, country: e.target.value })}
+                  className="w-full p-2 rounded bg-neutral-700 text-white"
+                >
+                  <option value="AE">United Arab Emirates</option>
+                  <option value="FR">France</option>
+                  <option value="US">United States</option>
+                  <option value="GB">United Kingdom</option>
+                </select>
+              </div>
+
+              {!validatePostal(customerInfo.country, customerInfo.postalCode) && (
+                <p className="text-red-400 text-sm">Code postal invalide pour le pays sélectionné.</p>
+              )}
             </div>
 
             <button
-                className={`btn btn-primary w-full py-3 ${
-                    !isFormValid() ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-                onClick={handleCheckout}
-                disabled={!isFormValid()}
+              className={`btn btn-primary w-full py-3 ${!isFormValid() ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={handleCheckout}
+              disabled={!isFormValid()}
             >
               Proceed to Checkout
             </button>
-
 
             <div className="mt-6 text-sm text-neutral-400 text-center">
               <p>Free Shipping Worldwide</p>

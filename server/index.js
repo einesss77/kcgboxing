@@ -17,6 +17,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 app.use(cors({ origin: process.env.FRONTEND_URL }));
 
+ 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 // ✅ WEBHOOK STRIPE
@@ -166,6 +167,7 @@ app.post('/create-checkout-session', async (req, res) => {
   } catch (err) {
     console.error('❌ create-checkout-session:', err);
     res.status(500).json({ error: 'Erreur lors de la création de session' });
+
   }
 });
 
@@ -175,16 +177,25 @@ app.post('/create-checkout-session', async (req, res) => {
 
 
 app.listen(4242, () => {
+
   console.log("✅ Server is running on http://localhost:4242");
+
 });
 
+/* -------------------------
+   Send Order Email
+   ------------------------- */
 const sendOrderEmail = async (items, customer) => {
   try {
+
+
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
+
         user: process.env.MAIL_FROM,
+
         pass: process.env.EMAIL_PASSWORD,
       },
     });
@@ -193,6 +204,7 @@ const sendOrderEmail = async (items, customer) => {
     const glove = item.glove;
 
     const html = `
+
             <h2>Nouvelle commande reçue</h2>
 
             <h3>👤 Informations client</h3>
@@ -227,6 +239,7 @@ const sendOrderEmail = async (items, customer) => {
 
     const jsonAttachment = {
       filename: `commande-${customer.name?.replace(/\s+/g, '-').toLowerCase() || 'client'}.json`,
+
       content: JSON.stringify(items, null, 2),
       contentType: 'application/json',
     };
@@ -234,21 +247,26 @@ const sendOrderEmail = async (items, customer) => {
     const imageAttachments = await getImageAttachmentsFromItems(items);
 
     const info = await transporter.sendMail({
+
       from: `"Boutique Gants" <${process.env.MAIL_FROM}>`,
       to: ['einesbek@gmail.com', 'kcgboxing@gmail.com'],
       subject: 'Nouvelle commande sur ton site',
+
       html,
       attachments: [jsonAttachment, ...imageAttachments],
     });
 
+
   } catch (error) {
     console.error("❌ Erreur envoi e-mail :", error);
+
   }
 };
 
 app.post('/save-order', async (req, res) => {
   try {
     const { customer, items } = req.body;
+
 
     const order = await prisma.order.create({
       data: {
@@ -273,6 +291,7 @@ app.post('/save-order', async (req, res) => {
   } catch (err) {
     console.error("❌ Erreur DB :", err);
     res.status(500).json({ error: "Erreur base de données" });
+
   }
 });
 
@@ -284,8 +303,10 @@ app.get('/admin/orders', async (req, res) => {
     });
     res.json(orders);
   } catch (err) {
+
     console.error("❌ Erreur récupération commandes :", err);
     res.status(500).json({ error: 'Erreur lors de la récupération des commandes.' });
+
   }
 });
 
@@ -301,7 +322,9 @@ const getImageAttachmentsFromItems = async (items) => {
           attachments.push({
             filename: `image-${index}-${zone}-${i}.png`,
             path: image.url,
+
             cid: `image-${index}-${zone}-${i}`, // optionnel, si on veut les afficher dans le HTML un jour
+ 
           });
         });
       }
@@ -310,5 +333,3 @@ const getImageAttachmentsFromItems = async (items) => {
 
   return attachments;
 };
-
-

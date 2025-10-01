@@ -59,7 +59,7 @@ export default function ImageUploader() {
       <div>
         <h3 className="text-lg font-semibold mb-3">Upload Custom Images</h3>
         <p className="text-neutral-400 text-sm mb-4">
-          Add multiple images to customize specific areas of the gloves. Each image costs $7.99.
+          Add multiple images to customize specific areas of the gloves. Each image costs € 7.00
         </p>
       </div>
 
@@ -78,7 +78,7 @@ export default function ImageUploader() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Add Image (+$7.99)</label>
+          <label className="block text-sm font-medium mb-2">Add Image (+€7.00)</label>
           <div
             className={`
               border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
@@ -219,7 +219,7 @@ export default function ImageUploader() {
             <li>• Images should have a transparent background for best results</li>
             <li>• Recommended size: 512x512 pixels</li>
             <li>• Keep file size under 5MB for optimal performance</li>
-            <li>• Each image costs $7.99</li>
+            <li>• Each image costs €7.00</li>
             <li>• You can add multiple images to each zone</li>
           </ul>
         </div>

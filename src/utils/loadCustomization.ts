@@ -4,22 +4,28 @@ import {
   CustomImage,
   Zone,
   GloveColor,
-  ColorField,
   useCustomizationStore,
 } from '../store/customizationStore';
 
-// Infer finish for older JSONs that may not include it
+// Infer finish for older JSONs (includes 'matte')
 function normalizeColor(c: any): GloveColor {
   if (!c) {
     return { name: 'Classic Black', hex: '#000000', price: 0, finish: 'solid' };
   }
-  const name = String(c.name ?? '').toLowerCase();
+  const nameLower = String(c.name ?? '').toLowerCase();
 
   const inferredFinish: GloveColor['finish'] =
     c.finish ??
-    (name.includes('metallic') || name.includes('chrome') ? 'metallic'
-      : name.includes('neon') || name.includes('fluorescent') || name.includes('clear')
+    (nameLower.includes('metallic') || nameLower.includes('chrome')
+      ? 'metallic'
+      : nameLower.includes('neon') ||
+        nameLower.includes('fluorescent') ||
+        nameLower.includes('clear')
       ? 'fluorescent'
+      : nameLower.includes('matte') ||
+        nameLower.includes('matt') ||
+        nameLower.includes('flat')
+      ? 'matte'
       : 'solid');
 
   return {
@@ -27,7 +33,6 @@ function normalizeColor(c: any): GloveColor {
     hex: c.hex ?? '#000000',
     price: Number(c.price ?? 0),
     finish: inferredFinish,
-    // keep any provided values, otherwise set sensible defaults
     gloss: c.gloss ?? (inferredFinish === 'metallic' ? 0.7 : undefined),
     glow:  c.glow  ?? (inferredFinish === 'fluorescent' ? 0.85 : undefined),
   };
@@ -41,29 +46,37 @@ export function loadCustomizationFromJson(
   const { updateColor, updateSize, updateTextZone, addCustomImage } =
     useCustomizationStore.getState();
 
-  // Colors — set the EXACT color fields (no stripping "Color")
+  // 1) CLEAR existing images so the previous load doesn't leak into this one
+  {
+    const state = useCustomizationStore.getState();
+    const empty = Object.fromEntries(
+      (Object.keys(state.customImages) as Zone[]).map((z) => [z, [] as CustomImage[]])
+    ) as Record<Zone, CustomImage[]>;
+    useCustomizationStore.setState({ customImages: empty });
+  }
+
+  // 2) Colors — strip the "Color" suffix so the store writes the right field
   Object.entries(gloveData || {}).forEach(([key, value]) => {
     if (key.endsWith('Color') && value && typeof value === 'object') {
-      const field = key as ColorField;                 // e.g. "fingersColor"
-      const color = normalizeColor(value);             // ensure finish/gloss/glow exist
-      updateColor(field, color);                       // store updates cost internally
+      const part = key.replace(/Color$/, ''); // e.g. "fingersColor" -> "fingers"
+      updateColor(part, normalizeColor(value));
     }
   });
 
-  // Size
+  // 3) Size
   if (gloveData?.size) {
     updateSize(gloveData.size);
   }
 
-  // Text zones
+  // 4) Text zones
   Object.entries(textZones || {}).forEach(([zone, settings]) => {
-    if (settings) {
-      updateTextZone(zone as Zone, settings);
-    }
+    if (settings) updateTextZone(zone as Zone, settings);
   });
 
-  // Images — keep id + transform from JSON when adding
+  // 5) Images — keep id + transform from JSON when adding
+  //    Skip WristOutline; Strap will mirror there automatically.
   Object.entries(customImages || {}).forEach(([zone, images]) => {
+    if (zone === 'WristOutline') return;
     (images || []).forEach((image) => {
       addCustomImage(zone as Zone, image.url, {
         id: image.id,
