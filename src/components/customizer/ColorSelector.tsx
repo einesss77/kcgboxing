@@ -4,27 +4,27 @@ import { GloveColor } from '../../types/glove';
 
 // === Color palette with finishes ===
 const colors: GloveColor[] = [
-  { name: 'Classic Black',   hex: '#000000', price: 0, finish: 'solid' },
-  { name: 'Classic White',   hex: '#FFFFFF', price: 0, finish: 'solid' },
-  { name: 'Navy Blue',       hex: '#1a237e', price: 0, finish: 'solid' },
-  { name: 'Royal Blue',      hex: '#2563EB', price: 0, finish: 'solid' },
-  { name: 'Forest Green',    hex: '#047857', price: 0, finish: 'solid' },
-  { name: 'Rich Red',        hex: '#F03513', price: 0, finish: 'solid' },
-  { name: 'Deep Brown',      hex: '#78350f', price: 0, finish: 'solid' },
-  { name: 'Pearl White',     hex: '#f8fafc', price: 0, finish: 'solid' },
-  { name: 'Carbon Black',    hex: '#111827', price: 0, finish: 'solid' },
+  { name: 'Classic Black', hex: '#000000', price: 0, finish: 'solid' },
+  { name: 'Classic White', hex: '#FFFFFF', price: 0, finish: 'solid' },
+  { name: 'Navy Blue', hex: '#1a237e', price: 0, finish: 'solid' },
+  { name: 'Royal Blue', hex: '#2563EB', price: 0, finish: 'solid' },
+  { name: 'Forest Green', hex: '#047857', price: 0, finish: 'solid' },
+  { name: 'Rich Red', hex: '#F03513', price: 0, finish: 'solid' },
+  { name: 'Deep Brown', hex: '#78350f', price: 0, finish: 'solid' },
+  { name: 'Pearl White', hex: '#f8fafc', price: 0, finish: 'solid' },
+  { name: 'Carbon Black', hex: '#111827', price: 0, finish: 'solid' },
 
   // Metallics
-  { name: 'Metallic Gold',   hex: '#c5a572', price: 0, finish: 'metallic', gloss: 0.75 },
+  { name: 'Metallic Gold', hex: '#c5a572', price: 0, finish: 'metallic', gloss: 0.75 },
   { name: 'Metallic Silver', hex: '#94A3B8', price: 0, finish: 'metallic', gloss: 0.7 },
   { name: 'Metallic Purple', hex: '#9013F0', price: 0, finish: 'metallic', gloss: 0.7 },
-  { name: 'Rose Gold',       hex: '#f4a7a7', price: 0, finish: 'metallic', gloss: 0.7 },
+  { name: 'Rose Gold', hex: '#f4a7a7', price: 0, finish: 'metallic', gloss: 0.7 },
 
   // Fluorescents
-  { name: 'Neon Green',      hex: '#22C55E', price: 0, finish: 'fluorescent', glow: 0.85 },
-  { name: 'Clear Blue',      hex: '#13ECF0', price: 0, finish: 'fluorescent', glow: 0.85 },
-  { name: 'Neon Yellow',     hex: '#FFFF33', price: 0, finish: 'fluorescent', glow: 0.9 },
-  { name: 'Neon Pink',       hex: '#FF10F0', price: 0, finish: 'fluorescent', glow: 0.9 },
+  { name: 'Neon Green', hex: '#22C55E', price: 0, finish: 'fluorescent', glow: 0.85 },
+  { name: 'Clear Blue', hex: '#13ECF0', price: 0, finish: 'fluorescent', glow: 0.85 },
+  { name: 'Neon Yellow', hex: '#FFFF33', price: 0, finish: 'fluorescent', glow: 0.9 },
+  { name: 'Neon Pink', hex: '#FF10F0', price: 0, finish: 'fluorescent', glow: 0.9 },
 ];
 
 // === Swatch styling helpers ===
@@ -95,7 +95,7 @@ const ColorSelector: React.FC = () => {
                     ${selected ? 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-neutral-900' : ''}
                     hover:scale-105 transition-transform duration-200
                   `}
-                  title={`${color.name}${color.price > 0 ? ` (+$${color.price.toFixed(2)})` : ''}`}
+                  title={`${color.name}${color.price > 0 ? ` (+${color.price.toFixed(2)} €)` : ''}`}
                 >
                   {color.price > 0 && (
                     <div className="absolute bottom-0 right-0 bg-black/70 px-1.5 py-0.5 text-xs text-white">

@@ -165,7 +165,7 @@ const zones: Zone[] = [
 
 const initialGlove: CustomGlove = {
   id: uuidv4(),
-  basePrice: 99.99,
+  basePrice: 135,
   customizationCost: 0,
 
   palmColor: { ...defaultColor },
@@ -365,7 +365,7 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
     const totalImages = Object.entries(get().customImages)
       .filter(([zone]) => zone !== 'WristOutline')
       .reduce((sum, [, zoneImages]) => sum + zoneImages.length, 0);
-    total += totalImages * 7.99;
+    total += totalImages * 5;
 
     return total;
   },
