@@ -171,7 +171,7 @@ const zones: Zone[] = [
 
 const initialGlove: CustomGlove = {
   id: uuidv4(),
-  basePrice: 99.99,
+  basePrice: 135,
   customizationCost: 0,
 
   palmColor: { ...defaultColor },
