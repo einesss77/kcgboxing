@@ -16,6 +16,8 @@ model Order {
   total     Float
   createdAt DateTime @default(now())
   items     Item[]
+  originalJson Json?
+  originalJsonText String?  @db.Text // ← IMPORTANT: unlimited text
 }
 
 model Item {

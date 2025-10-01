@@ -8,34 +8,29 @@ const MATTE_SURCHARGE = 0;
 
 // === Color palette with finishes ===
 const colors: GloveColor[] = [
-  // Solids
+
   { name: 'Classic Black', hex: '#000000', price: 0, finish: 'solid' },
   { name: 'Classic White', hex: '#FFFFFF', price: 0, finish: 'solid' },
-  { name: 'Navy Blue',     hex: '#1a237e', price: 0, finish: 'solid' },
-  { name: 'Royal Blue',    hex: '#2563EB', price: 0, finish: 'solid' },
-  { name: 'Forest Green',  hex: '#047857', price: 0, finish: 'solid' },
-  { name: 'Rich Red',      hex: '#F03513', price: 0, finish: 'solid' },
-  { name: 'Deep Brown',    hex: '#78350f', price: 0, finish: 'solid' },
-  { name: 'Pearl White',   hex: '#f8fafc', price: 0, finish: 'solid' },
-  { name: 'Carbon Black',  hex: '#111827', price: 0, finish: 'solid' },
+  { name: 'Navy Blue', hex: '#1a237e', price: 0, finish: 'solid' },
+  { name: 'Royal Blue', hex: '#2563EB', price: 0, finish: 'solid' },
+  { name: 'Forest Green', hex: '#047857', price: 0, finish: 'solid' },
+  { name: 'Rich Red', hex: '#F03513', price: 0, finish: 'solid' },
+  { name: 'Deep Brown', hex: '#78350f', price: 0, finish: 'solid' },
+  { name: 'Pearl White', hex: '#f8fafc', price: 0, finish: 'solid' },
+  { name: 'Carbon Black', hex: '#111827', price: 0, finish: 'solid' },
 
-  // Matte
-  { name: 'Matte Black', hex: '#0b0b0b', price: MATTE_SURCHARGE, finish: 'matte' },
-  { name: 'Matte Navy',  hex: '#0f1b3d', price: MATTE_SURCHARGE, finish: 'matte' },
-  { name: 'Matte Red',   hex: '#b22323', price: MATTE_SURCHARGE, finish: 'matte' },
-  { name: 'Matte Olive', hex: '#3a4a3d', price: MATTE_SURCHARGE, finish: 'matte' },
-
-  // Metallics (with surcharge)
-  { name: 'Metallic Gold',   hex: '#c5a572', price: METALLIC_SURCHARGE, finish: 'metallic', gloss: 0.75 },
-  { name: 'Metallic Silver', hex: '#94A3B8', price: METALLIC_SURCHARGE, finish: 'metallic', gloss: 0.70 },
-  { name: 'Metallic Purple', hex: '#9013F0', price: METALLIC_SURCHARGE, finish: 'metallic', gloss: 0.70 },
-  { name: 'Rose Gold',       hex: '#f4a7a7', price: METALLIC_SURCHARGE, finish: 'metallic', gloss: 0.70 },
+  // Metallics
+  { name: 'Metallic Gold', hex: '#c5a572', price: 0, finish: 'metallic', gloss: 0.75 },
+  { name: 'Metallic Silver', hex: '#94A3B8', price: 0, finish: 'metallic', gloss: 0.7 },
+  { name: 'Metallic Purple', hex: '#9013F0', price: 0, finish: 'metallic', gloss: 0.7 },
+  { name: 'Rose Gold', hex: '#f4a7a7', price: 0, finish: 'metallic', gloss: 0.7 },
 
   // Fluorescents
-  { name: 'Neon Green',  hex: '#22C55E', price: 0, finish: 'fluorescent', glow: 0.85 },
-  { name: 'Clear Blue',  hex: '#13ECF0', price: 0, finish: 'fluorescent', glow: 0.85 },
-  { name: 'Neon Yellow', hex: '#FFFF33', price: 0, finish: 'fluorescent', glow: 0.90 },
-  { name: 'Neon Pink',   hex: '#FF10F0', price: 0, finish: 'fluorescent', glow: 0.90 },
+  { name: 'Neon Green', hex: '#22C55E', price: 0, finish: 'fluorescent', glow: 0.85 },
+  { name: 'Clear Blue', hex: '#13ECF0', price: 0, finish: 'fluorescent', glow: 0.85 },
+  { name: 'Neon Yellow', hex: '#FFFF33', price: 0, finish: 'fluorescent', glow: 0.9 },
+  { name: 'Neon Pink', hex: '#FF10F0', price: 0, finish: 'fluorescent', glow: 0.9 },
+
 ];
 
 /* === Swatch styling helpers === */
@@ -117,7 +112,9 @@ const ColorSelector: React.FC = () => {
                     ${selected ? 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-neutral-900' : ''}
                     hover:scale-105 transition-transform duration-200
                   `}
-                  title={`${color.name}${color.price > 0 ? ` (+${fmt(color.price)})` : ''}`}
+
+                  title={`${color.name}${color.price > 0 ? ` (+${color.price.toFixed(2)} €)` : ''}`}
+
                 >
                   {/* Badge (top-left) */}
                   {color.finish === 'metallic' && (
