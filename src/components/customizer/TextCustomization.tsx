@@ -54,6 +54,10 @@ export default function TextCustomization() {
                 <option value="Georgia">Georgia</option>
                 <option value="Impact">Impact</option>
                 <option value="Verdana">Verdana</option>
+                <option value="Bebas Neue">Bebas Neue</option>
+                <option value="Jacquard 24">Jacquard 24</option>
+                <option value="Licorice">Licorice</option>
+                <option value="Lavishly Yours">Lavishly Yours</option>
               </select>
             </div>
 

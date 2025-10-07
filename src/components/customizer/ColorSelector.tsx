@@ -1,28 +1,44 @@
 import React from 'react';
 import { useCustomizationStore } from '../../store/customizationStore';
 import { GloveColor } from '../../types/glove';
-    
-const colors: GloveColor[] = [  
-  { name: 'Classic Black', hex: '#000000', price: 0 },  
-  { name: 'Classic White', hex: '#FFFFFF', price: 0 },  
-  { name: 'Navy Blue', hex: '#1a237e', price: 0 }, 
-  { name: 'Metallic Gold', hex: '#c5a572', price: 0 }, 
-  { name: 'Royal Blue', hex: '#2563EB', price: 0 }, 
+
+const colors: GloveColor[] = [
+  { name: 'Classic Black', hex: '#000000', price: 0 },
+  { name: 'Classic White', hex: '#FFFFFF', price: 0 },
+  { name: 'Navy Blue', hex: '#1a237e', price: 0 },
+  { name: 'Royal Blue', hex: '#2563EB', price: 0 },
   { name: 'Forest Green', hex: '#047857', price: 0 },
   { name: 'Neon Green', hex: '#22C55E', price: 0 },
-  { name: 'Metallic Silver', hex: '#94A3B8', price: 0 },  
-  { name: 'Metallic Purple', hex: '#9333EA', price: 0 },
   { name: 'Rich Red', hex: '#dc2626', price: 0 },
   { name: 'Deep Brown', hex: '#78350f', price: 0 },
-  { name: 'Carbon Black', hex: '#111827', price: 0 }, 
+  { name: 'Carbon Black', hex: '#111827', price: 0 },
   { name: 'Pearl White', hex: '#f8fafc', price: 0 },
   { name: 'Rose Gold', hex: '#f472b6', price: 0 },
-  { name: 'Ultra Black', hex: '#0A0A0A', price: 0 }
-];   
- 
-const ColorSelector: React.FC = () => {  
+  { name: 'Ultra Black', hex: '#0A0A0A', price: 0 },
+
+  // Couleurs Mattes
+  { name: 'Matte Black', hex: '#1C1C1C', price: 0 },
+  { name: 'Matte White', hex: '#F5F5F5', price: 0 },
+  { name: 'Matte Orange', hex: '#FF6F00', price: 0 },
+  { name: 'Matte Blue', hex: '#1E3A8A', price: 0 },
+
+  // Couleurs Mettalic
+  { name: 'Metallic Purple', hex: '#6A0DAD', price: 7 },
+  { name: 'Metallic Blue', hex: '#1F51FF', price: 7 },
+  { name: 'Metallic Black', hex: '#2B2B2B', price: 7 },
+  { name: 'Metallic White', hex: '#E5E4E2', price: 7 },
+  { name: 'Metallic Gold', hex: '#D4AF37', price: 7 },
+  { name: 'Metallic Silver', hex: '#C0C0C0', price: 7 },
+  { name: 'Metallic Green', hex: '#0A8754', price: 7 },
+  { name: 'Metallic Silver', hex: '#94A3B8', price: 7 },
+  { name: 'Metallic Purple', hex: '#9333EA', price: 7 },
+  { name: 'Metallic Gold', hex: '#c5a572', price: 7 }
+
+];
+
+const ColorSelector: React.FC = () => {
   const { glove, updateColor } = useCustomizationStore();
- 
+
   const sections = [
     { id: 'fingers', label: 'Fingers', color: glove.fingersColor },
     { id: 'innerPalm', label: 'Inner Palm', color: glove.innerPalmColor },
