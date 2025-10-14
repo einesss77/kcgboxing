@@ -244,7 +244,7 @@ const CartPage: React.FC = () => {
               </div>
             </div>
             <div className="space-y-4 mb-6">
-              <h3 className="text-lg font-semibold text-white">Informations client</h3>
+              <h3 className="text-lg font-semibold text-white">clients information</h3>
               <input
                   type="text"
                   placeholder="Full Name"
