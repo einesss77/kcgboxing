@@ -1,8 +1,38 @@
 import React from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const SuccessPage: React.FC = () => {
     const navigate = useNavigate();
+    const called = useRef(false);
+
+    useEffect(() => {
+        if (called.current) return;
+        called.current = true;
+
+        let items: any[] = [];
+        let customer: any = null;
+
+        // read what the cart saved before redirecting to Stripe
+        try { items = JSON.parse(sessionStorage.getItem('orderItems') || '[]'); } catch { }
+        try { customer = JSON.parse(sessionStorage.getItem('orderCustomer') || 'null'); } catch { }
+
+        if (items?.length && customer?.email) {
+            const api = (import.meta.env.VITE_API_URL || window.location.origin).toString();
+
+            fetch(`${api}/email/paid`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items, customer }),
+            })
+                .catch(console.error)
+                .finally(() => {
+                    // prevent re-sending on refresh
+                    sessionStorage.removeItem('orderItems');
+                    sessionStorage.removeItem('orderCustomer');
+                });
+        }
+    }, []);
 
     return (
         <div className="pt-24 pb-16 container-custom max-w-xl mx-auto text-white text-center">

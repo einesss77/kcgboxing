@@ -5,6 +5,8 @@ import Stripe from 'stripe';
 import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import sendPaidOrderEmail from './sendPaidOrderEmail.js';
+
 dotenv.config();
 
 const app = express();
@@ -174,6 +176,20 @@ app.get('/admin/orders', async (req, res) => {
         res.status(500).json({ error: 'Erreur lors de la récupération des commandes.' });
     }
 });
+// super simple trigger: no verification, just send
+app.post('/email/paid', async (req, res) => {
+    try {
+        const { items, customer } = req.body; // send from frontend success page
+        if (!items || !customer) return res.status(400).json({ error: 'Missing items or customer' });
+
+        await sendPaidOrderEmail(items, customer);
+        res.json({ ok: true });
+    } catch (e) {
+        console.error('/email/paid failed:', e);
+        res.status(500).json({ error: 'Failed to send paid order email' });
+    }
+});
+
 
 const getImageAttachmentsFromItems = async (items) => {
     const attachments = [];

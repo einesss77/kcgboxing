@@ -26,7 +26,7 @@ const colors: GloveColor[] = [
   { name: 'Metallic Purple', hex: '#6A0DAD', price: 7 },
   { name: 'Metallic Blue', hex: '#1F51FF', price: 7 },
   { name: 'Metallic Black', hex: '#2B2B2B', price: 7 },
-  { name: 'Metallic White', hex: '#E5E4E2', price: 7 },
+  { name: 'Metallic White', hex: '#FFFFFF', price: 7 },
   { name: 'Metallic Gold', hex: '#D4AF37', price: 7 },
   { name: 'Metallic Silver', hex: '#C0C0C0', price: 7 },
   { name: 'Metallic Green', hex: '#0A8754', price: 7 },
@@ -77,6 +77,11 @@ const ColorSelector: React.FC = () => {
                 {color.name.toLowerCase().includes('metallic') && (
                   <div className="absolute top-0 left-0 bg-yellow-300/30 px-1.5 py-0.5 text-xs text-black">
                     ✨ Metallic
+                  </div>
+                )}
+                {color.name.toLowerCase().includes('matte') && (
+                  <div className="absolute top-0 left-0 bg-neutral-800/60 px-1.5 py-0.5 text-xs text-white">
+                    ⚫ Matte
                   </div>
                 )}
               </button>

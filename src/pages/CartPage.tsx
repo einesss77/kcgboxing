@@ -74,6 +74,8 @@ const CartPage: React.FC = () => {
       const data = await res.json();
       if (data?.url) {
         sessionStorage.setItem('orderData', JSON.stringify(items));
+        sessionStorage.setItem('orderItems', JSON.stringify(items));
+        sessionStorage.setItem('orderCustomer', JSON.stringify(customerInfo));
         window.location.href = data.url;
       } else {
         alert("Erreur lors de la création de la session de paiement.");

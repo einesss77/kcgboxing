@@ -5,6 +5,8 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { useCustomizationStore } from '../store/customizationStore';
 import { generateTextTexture } from '../utils/GenerateTextTexture';
+// import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment';
+
 
 function GloveViewer() {
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -29,6 +31,7 @@ function GloveViewer() {
     renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
     mountRef.current.appendChild(renderer.domElement);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.6);
     const directional = new THREE.DirectionalLight(0xffffff, 1);
@@ -124,6 +127,9 @@ function GloveViewer() {
           });
 
           material.map = texture;
+          (texture as any).colorSpace = THREE.SRGBColorSpace;
+          texture.needsUpdate = true;
+
         } else {
           // 🧤 Crée une texture plate de la couleur du gant
           const canvas = document.createElement('canvas');
@@ -134,7 +140,54 @@ function GloveViewer() {
           const baseTexture = new THREE.CanvasTexture(canvas);
 
           material.map = baseTexture;
+          (baseTexture as any).colorSpace = THREE.SRGBColorSpace;
+          baseTexture.needsUpdate = true;
         }
+        // === FINISH: Metallic vs Matte ===
+        // // 1) Get the selected color object for this mesh zone
+        const selectedColor = (() => {
+          switch (name) {
+            case 'Fingers': return glove.fingersColor;
+            case 'InnerPalm': return glove.innerPalmColor;
+            case 'OutterPalm': return glove.outerPalmColor;
+            case 'InnerThumb': return glove.innerThumbColor;
+            case 'OutterThumb': return glove.outerThumbColor;
+            case 'Strap': return glove.strapColor;
+            case 'Wrist': return glove.wristColor;
+            case 'WristOutline': return glove.wristOutlineColor;
+            case 'Outline': return glove.outlineColor;
+            default: return undefined;
+          }
+        })();
+
+        // 2) choose finish type from name or price
+        const cname = (selectedColor?.name || '').toLowerCase();
+        const isMetallic = cname.startsWith('metallic') || selectedColor?.price === 7;
+        const isMatte = cname.startsWith('matte');
+
+        // // 3) if GLTF had PBR maps, they override our values — null them
+        if ('metalnessMap' in material) (material as any).metalnessMap = null;
+        if ('roughnessMap' in material) (material as any).roughnessMap = null;
+
+        // // 4) Apply PBR values (requires env map in 1)
+        if ('metalness' in material && 'roughness' in material) {
+          if (isMetallic) {
+            material.metalness = 0.9;
+            material.roughness = 0.15;
+            (material as any).envMapIntensity = 0.65;
+
+          } else if (isMatte) {
+            material.metalness = 0.0;
+            material.roughness = 1;
+            (material as any).envMapIntensity = 1;
+          } else {
+            // default look 
+            material.metalness = 0.0;
+            material.roughness = 0.6;
+            (material as any).envMapIntensity = 1;
+          }
+        }
+
 
         material.needsUpdate = true;
       }
