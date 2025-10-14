@@ -111,15 +111,15 @@ interface CustomizationState {
 }
 
 const defaultColor: GloveColor = {
-  name: 'Classic Black',
-  hex: '#000000',
+  name: 'Classic white',
+  hex: '#FFFFFF',
   price: 0,
 };
 
 const defaultTextSettings: TextSettings = {
   text: '',
   font: 'Arial',
-  color: '#FFFFFF',
+  color: '#000000',
   size: 64,
   rotation: 0,
   x: 256,
