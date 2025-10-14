@@ -189,13 +189,13 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
   glove: initialGlove,
 
   textZones: {
-    Wrist: { text: '', font: 'Arial', color: '#FFFFFF', size: 36, rotation: 90, x: 260, y: 360 },
-    InnerThumb: { text: '', font: 'Arial', color: '#FFFFFF', size: 28, rotation: 300, x: 250, y: 220 },
-    OutterThumb: { text: '', font: 'Arial', color: '#FFFFFF', size: 70, rotation: 30, x: 180, y: 230 },
-    InnerPalm: { text: '', font: 'Arial', color: '#FFFFFF', size: 36, rotation: 0, x: 200, y: 110 },
-    OutterPalm: { text: '', font: 'Arial', color: '#FFFFFF', size: 32, rotation: 0, x: 350, y: 400 },
-    Strap: { text: '', font: 'Arial', color: '#FFFFFF', size: 32, rotation: 90, x: 110, y: 450 },
-    WristOutline: { text: '', font: 'Arial', color: '#FFFFFF', size: 64, rotation: 0, x: 256, y: 256 },
+    Wrist: { text: '', font: 'Arial', color: '#000000', size: 36, rotation: 90, x: 260, y: 360 },
+    InnerThumb: { text: '', font: 'Arial', color: '#000000', size: 28, rotation: 300, x: 250, y: 220 },
+    OutterThumb: { text: '', font: 'Arial', color: '#000000', size: 70, rotation: 30, x: 180, y: 230 },
+    InnerPalm: { text: '', font: 'Arial', color: '#000000', size: 36, rotation: 0, x: 200, y: 110 },
+    OutterPalm: { text: '', font: 'Arial', color: '#000000', size: 32, rotation: 0, x: 350, y: 400 },
+    Strap: { text: '', font: 'Arial', color: '#000000', size: 32, rotation: 90, x: 110, y: 450 },
+    WristOutline: { text: '', font: 'Arial', color: '#000000', size: 64, rotation: 0, x: 256, y: 256 },
   },
 
   customImages: zones.reduce((acc, zone) => {
