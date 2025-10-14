@@ -40,11 +40,11 @@ const ColorSelector: React.FC = () => {
   const { glove, updateColor } = useCustomizationStore();
 
   const sections = [
-    { id: 'fingers', label: 'Fingers', color: glove.fingersColor },
-    { id: 'innerPalm', label: 'Inner Palm', color: glove.innerPalmColor },
     { id: 'outerPalm', label: 'Outer Palm', color: glove.outerPalmColor },
+    { id: 'innerPalm', label: 'Inner Palm', color: glove.innerPalmColor },
     { id: 'innerThumb', label: 'Inner Thumb', color: glove.innerThumbColor },
     { id: 'outerThumb', label: 'Outer Thumb', color: glove.outerThumbColor },
+    { id: 'fingers', label: 'Fingers', color: glove.fingersColor },
     { id: 'strap', label: 'Wrist Outline', color: glove.strapColor },
     { id: 'wrist', label: 'Wrist', color: glove.wristColor },
     { id: 'wristOutline', label: 'Starp', color: glove.wristOutlineColor },
