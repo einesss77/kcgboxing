@@ -29,7 +29,7 @@ const CartPage: React.FC = () => {
             onClick={() => window.location.href = "/customize"}
             className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-3 px-6 rounded-lg text-lg transition"
           >
-            Acheter maintenant
+            Buy Now
           </button>
         </div>
       </div>
@@ -247,7 +247,7 @@ const CartPage: React.FC = () => {
               <h3 className="text-lg font-semibold text-white">Informations client</h3>
               <input
                   type="text"
-                  placeholder="Nom complet"
+                  placeholder="Full Name"
                   value={customerInfo.name}
                   onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
                   className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
@@ -261,14 +261,14 @@ const CartPage: React.FC = () => {
               />
               <input
                   type="tel"
-                  placeholder="Téléphone"
+                  placeholder="+?? phone number"
                   value={customerInfo.phone}
                   onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
                   className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
               />
               <input
                   type="text"
-                  placeholder="Adresse de livraison"
+                  placeholder="Full delivery address"
                   value={customerInfo.address}
                   onChange={(e) => setCustomerInfo({...customerInfo, address: e.target.value})}
                   className="w-full p-2 rounded bg-neutral-700 text-white placeholder:text-neutral-400"
@@ -288,7 +288,7 @@ const CartPage: React.FC = () => {
 
             <div className="mt-6 text-sm text-neutral-400 text-center">
               <p>Free shipping on all orders over $150</p>
-              <p className="mt-2">30-day satisfaction guarantee</p>
+              <p className="mt-2">30-day satisfaction guarantee.No guarantee on metallic colors</p>
             </div>
           </div>
         </div>
