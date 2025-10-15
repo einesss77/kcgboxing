@@ -72,7 +72,7 @@ const sendOrderEmail = async (items, customer) => {
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-                user: 'einesbek@gmail.com',
+                user: process.env.MAIL_FROM,
                 pass: process.env.EMAIL_PASSWORD,
             },
         });
