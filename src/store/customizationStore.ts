@@ -126,12 +126,16 @@ const defaultTextSettings: TextSettings = {
   y: 256,
 };
 
-const defaultImageTransform: ImageTransform = {
-  x: 0,
-  y: 0,
-  scale: 1,
-  rotation: 0,
+const defaultTransformsByZone: Record<Zone, ImageTransform> = {
+  //Wrist: { x: 260, y: 360, scale: 0.25, rotation: 90 },
+  //InnerThumb: { x: 250, y: 220, scale: 0.20, rotation: 300 },
+  OutterThumb: { x: 27, y: -19, scale: 1.2, rotation: 0 },
+  //InnerPalm: { x: 200, y: 110, scale: 0.25, rotation: 0 },
+  OutterPalm: { x: 92, y: 137, scale: 0.16, rotation: 0 },
+  Strap: { x: 25, y: 207, scale: 0.14, rotation: 87 },
+  //WristOutline: { x: 256, y: 256, scale: 0.25, rotation: 0 },
 };
+
 
 const zones: Zone[] = [
   'Wrist',
@@ -238,7 +242,7 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
 
   addCustomImage: (zone, url, options) => {
     const id = options?.id ?? uuidv4();
-    const transform: ImageTransform = options?.transform ?? { ...defaultImageTransform };
+    const transform: ImageTransform = options?.transform ?? { ...defaultTransformsByZone[zone] };
     const newImage: CustomImage = { id, url, transform };
 
     set((state) => {

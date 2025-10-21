@@ -311,7 +311,7 @@ function GloveViewer() {
           );
 
           // Metalness only on background
-          material.metalness = 0.9;
+          material.metalness = 0.5;
           material.metalnessMap = bgMask;
 
           // Make background glossy (R_bg), overlays diffuse (R_ov)
