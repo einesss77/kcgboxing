@@ -13,6 +13,26 @@ interface TextOptions {
   images?: CustomImage[];
 }
 
+// Load a font and ensure it's ready before rendering
+async function loadFont(fontFamily: string): Promise<void> {
+  // Skip loading for system fonts
+  const systemFonts = ['Arial', 'Courier New', 'Georgia', 'Impact', 'Verdana'];
+  if (systemFonts.includes(fontFamily)) {
+    return;
+  }
+
+  try {
+    // Use CSS Font Loading API to ensure font is loaded
+    await document.fonts.load(`bold 64px "${fontFamily}"`);
+
+    // Additional check: wait for fonts to be ready
+    await document.fonts.ready;
+  } catch (error) {
+    console.warn(`Failed to load font: ${fontFamily}`, error);
+    // Continue anyway - browser will fall back to default font
+  }
+}
+
 export async function generateTextTexture({
   text,
   font = 'Arial',
@@ -24,6 +44,9 @@ export async function generateTextTexture({
   size = 64,
   images = [],
 }: TextOptions): Promise<THREE.Texture> {
+  // IMPORTANT: Load the font first before rendering
+  await loadFont(font);
+
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 512;
   const ctx = canvas.getContext('2d')!;
@@ -53,7 +76,7 @@ export async function generateTextTexture({
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate((rotation * Math.PI) / 180);
-    ctx.font = `bold ${size}px ${font}`;
+    ctx.font = `bold ${size}px "${font}"`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.lineWidth = 4;

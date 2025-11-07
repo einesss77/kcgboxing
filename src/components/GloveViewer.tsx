@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
@@ -113,6 +113,23 @@ function GloveViewer() {
   const modelRef = useRef<THREE.Group | null>(null);
   const { glove, textZones, customImages } = useCustomizationStore();
 
+  // Auto-rotation state
+  const [autoRotateEnabled, setAutoRotateEnabled] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const isUserInteracting = useRef(false);
+  const isDraggingRef = useRef(false); // Use ref for immediate access in event handlers
+  const resumeTimeout = useRef<NodeJS.Timeout | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
+
+  // Track user-set rotation to preserve during auto-rotation
+  let userSetRotationX = 0;
+  let userSetRotationY = 0;
+  let userSetRotationZ = 0;
+
+  // For manual drag
+  let lastMouseX = 0;
+  let lastMouseY = 0;
+
   useEffect(() => {
     if (!mountRef.current) return;
 
@@ -151,7 +168,9 @@ function GloveViewer() {
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 1, 0);
     controls.enableDamping = true;
+    controls.enabled = false; // Disable OrbitControls, we handle rotation manually
     controls.update();
+    controlsRef.current = controls;
 
     const loader = new GLTFLoader();
     const dracoLoader = new DRACOLoader();
@@ -167,8 +186,114 @@ function GloveViewer() {
       updateMaterials();
     });
 
+    // Pointer event handlers for manual rotation
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      isUserInteracting.current = true; // Always set to true when user starts dragging
+      isDraggingRef.current = true; // Set ref immediately for event handlers
+      setIsDragging(true);
+      if (resumeTimeout.current) {
+        clearTimeout(resumeTimeout.current);
+        resumeTimeout.current = null;
+      }
+
+      // Store initial position
+      if (event instanceof MouseEvent) {
+        lastMouseX = event.clientX;
+        lastMouseY = event.clientY;
+      } else if (event.touches.length > 0) {
+        lastMouseX = event.touches[0].clientX;
+        lastMouseY = event.touches[0].clientY;
+      }
+    };
+
+    const handlePointerMove = (event: MouseEvent | TouchEvent) => {
+      // Only allow rotation when actively dragging (use ref for immediate access)
+      if (!isDraggingRef.current || !modelRef.current) return;
+
+      let currentX = 0;
+      let currentY = 0;
+      let isShiftPressed = false;
+
+      if (event instanceof MouseEvent) {
+        currentX = event.clientX;
+        currentY = event.clientY;
+        isShiftPressed = event.shiftKey;
+      } else if (event.touches.length > 0) {
+        currentX = event.touches[0].clientX;
+        currentY = event.touches[0].clientY;
+        // For touch, use two-finger drag for Z-axis rotation
+        isShiftPressed = event.touches.length === 2;
+      }
+
+      // Calculate drag delta
+      const deltaX = currentX - lastMouseX;
+      const deltaY = currentY - lastMouseY;
+
+      // Rotation sensitivity - 5x increased for highly responsive rotation
+      // Allows user to easily rotate glove to any angle including completely sideways (90°)
+      const rotationSpeed = 0.05;
+
+      if (isShiftPressed) {
+        // SHIFT MODE: Z-axis rotation (roll to side)
+        // Horizontal drag → Z-axis rotation (makes glove lie on its side)
+        modelRef.current.rotation.z += deltaX * rotationSpeed;
+
+        // Vertical drag → still affects X-axis for fine control
+        modelRef.current.rotation.x += deltaY * rotationSpeed;
+      } else {
+        // NORMAL MODE: X and Y axis rotation
+        // Horizontal drag → Y-axis rotation (spin left/right)
+        modelRef.current.rotation.y += deltaX * rotationSpeed;
+
+        // Vertical drag → X-axis rotation (tilt up/down)
+        modelRef.current.rotation.x += deltaY * rotationSpeed;
+      }
+
+      // Update last position
+      lastMouseX = currentX;
+      lastMouseY = currentY;
+    };
+
+    const handlePointerUp = () => {
+      isDraggingRef.current = false; // Clear ref immediately
+      setIsDragging(false);
+
+      // Save user's final rotation state to preserve during auto-rotation
+      if (modelRef.current) {
+        userSetRotationX = modelRef.current.rotation.x;
+        userSetRotationY = modelRef.current.rotation.y;
+        userSetRotationZ = modelRef.current.rotation.z;
+      }
+
+      // In manual mode, keep user interaction active to prevent auto-rotation
+      if (!autoRotateEnabled) {
+        isUserInteracting.current = true; // Keep it as interacting in manual mode
+      } else {
+        // In auto mode, resume rotation after a short delay
+        isUserInteracting.current = false;
+        if (resumeTimeout.current) {
+          clearTimeout(resumeTimeout.current);
+        }
+        resumeTimeout.current = setTimeout(() => {
+          isUserInteracting.current = false;
+        }, 1500);
+      }
+    };
+
+    // Add event listeners
+    renderer.domElement.addEventListener('mousedown', handlePointerDown as any);
+    renderer.domElement.addEventListener('mousemove', handlePointerMove as any);
+    renderer.domElement.addEventListener('mouseup', handlePointerUp);
+    renderer.domElement.addEventListener('touchstart', handlePointerDown as any);
+    renderer.domElement.addEventListener('touchmove', handlePointerMove as any);
+    renderer.domElement.addEventListener('touchend', handlePointerUp);
+
     const animate = () => {
       requestAnimationFrame(animate);
+      // Auto-rotation logic
+      if (modelRef.current && autoRotateEnabled && !isUserInteracting.current) {
+        modelRef.current.rotation.y += 0.005; // Continuous Y-axis rotation
+      }
       controls.update();
       renderer.render(scene, camera);
     };
@@ -184,12 +309,20 @@ function GloveViewer() {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      renderer.domElement.removeEventListener('mousedown', handlePointerDown as any);
+      renderer.domElement.removeEventListener('mousemove', handlePointerMove as any);
+      renderer.domElement.removeEventListener('mouseup', handlePointerUp);
+      renderer.domElement.removeEventListener('touchstart', handlePointerDown as any);
+      renderer.domElement.removeEventListener('touchmove', handlePointerMove as any);
+      renderer.domElement.removeEventListener('touchend', handlePointerUp);
       envRT.dispose();
       pmrem.dispose();
 
-      mountRef.current?.removeChild(renderer.domElement);
+      if (mountRef.current) {
+        mountRef.current.removeChild(renderer.domElement);
+      }
     };
-  }, []);
+  }, [autoRotateEnabled]);
 
   const updateMaterials = async () => {
     if (!modelRef.current) return;
@@ -327,14 +460,74 @@ function GloveViewer() {
   };
 
   useEffect(() => {
+    console.log('[GloveViewer] Glove, text, or images changed - updating materials');
+    console.log('[GloveViewer] Current fingersColor:', glove.fingersColor);
+    console.log('[GloveViewer] Current innerPalmColor:', glove.innerPalmColor);
     updateMaterials();
   }, [glove, textZones, customImages]);
 
   return (
-    <div
-      ref={mountRef}
-      style={{ width: '100%', height: '100%', backgroundColor: '#111' }}
-    />
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+      <div
+        ref={mountRef}
+        style={{ width: '100%', height: '100%', backgroundColor: '#111' }}
+      />
+
+      {/* Auto-rotation toggle button */}
+      <button
+        onClick={() => {
+          const newAutoState = !autoRotateEnabled;
+          setAutoRotateEnabled(newAutoState);
+
+          // When switching to auto mode, allow rotation to resume
+          if (newAutoState) {
+            isUserInteracting.current = false;
+          } else {
+            // When switching to manual mode, stop rotation immediately
+            isUserInteracting.current = true;
+          }
+
+          // Clear any pending resume timeout
+          if (resumeTimeout.current) {
+            clearTimeout(resumeTimeout.current);
+            resumeTimeout.current = null;
+          }
+        }}
+        style={{
+          position: 'absolute',
+          top: '20px',
+          right: '20px',
+          zIndex: 10,
+          backgroundColor: autoRotateEnabled ? '#D4B896' : '#374151',
+          color: autoRotateEnabled ? '#1a237e' : '#ffffff',
+          border: 'none',
+          borderRadius: '8px',
+          padding: '10px 16px',
+          fontSize: '14px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+          transition: 'all 0.2s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+        title={autoRotateEnabled ? 'Click to switch to Manual mode - stops auto-rotation' : 'Click to switch to Auto mode - continuous rotation'}
+      >
+        <span style={{ fontSize: '18px' }}>
+          {autoRotateEnabled ? '⟳' : '⏸'}
+        </span>
+        <span>
+          {autoRotateEnabled ? 'Auto' : 'Manual'}
+        </span>
+      </button>
+    </div>
   );
 }
 

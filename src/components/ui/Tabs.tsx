@@ -9,14 +9,20 @@ const TabsContext = createContext<TabsContextType | undefined>(undefined);
 
 interface TabsProps {
   defaultValue: string;
+  /** optional controlled value (if provided, Tabs becomes controlled) */
+  value?: string;
+  /** optional controlled onChange callback */
+  onChange?: (value: string) => void;
   children: ReactNode;
 }
 
-export const Tabs: React.FC<TabsProps> = ({ defaultValue, children }) => {
-  const [value, setValue] = useState(defaultValue);
+export const Tabs: React.FC<TabsProps> = ({ defaultValue, value: controlledValue, onChange: controlledOnChange, children }) => {
+  const [internalValue, setInternalValue] = useState(defaultValue);
+  const value = controlledValue ?? internalValue;
+  const onChange = controlledOnChange ?? setInternalValue;
 
   return (
-    <TabsContext.Provider value={{ value, onChange: setValue }}>
+    <TabsContext.Provider value={{ value, onChange }}>
       <div>{children}</div>
     </TabsContext.Provider>
   );
@@ -62,8 +68,8 @@ export const TabsTrigger: React.FC<TabsTriggerProps> = ({ value, children, class
       onClick={() => onChange(value)}
       className={`
         px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 
-        ${isSelected 
-          ? 'bg-gold text-navy' 
+        ${isSelected
+          ? 'bg-gold text-navy'
           : 'bg-navy/50 text-neutral-300 hover:bg-navy/70'
         }
         ${className}

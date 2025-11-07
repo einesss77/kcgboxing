@@ -5,6 +5,7 @@ export interface GloveColor {
   name: string;
   hex: string;
   price: number;
+  finish?: 'metallic' | 'matte' | 'glossy' | 'standard';
 }
 
 export interface GloveMaterial {
@@ -39,13 +40,13 @@ export interface CustomImage {
 }
 
 export type Zone =
-    | 'Wrist'
-    | 'InnerThumb'
-    | 'OutterThumb'
-    | 'InnerPalm'
-    | 'OutterPalm'
-    | 'Strap'
-    | 'WristOutline';
+  | 'Wrist'
+  | 'InnerThumb'
+  | 'OutterThumb'
+  | 'InnerPalm'
+  | 'OutterPalm'
+  | 'Strap'
+  | 'WristOutline';
 
 export interface TextSettings {
   text: string;
@@ -92,15 +93,21 @@ interface CustomizationState {
   textZones: Record<Zone, TextSettings>;
   customImages: Record<Zone, CustomImage[]>;
 
+  // UI navigation for the customizer (universal prev/next)
+  currentTab: string;
+  setCurrentTab: (tab: string) => void;
+  nextTab: () => void;
+  prevTab: () => void;
+
   updateColor: (part: string, color: GloveColor) => void;
   updateSize: (size: string) => void;
   updateTextZone: (zone: Zone, updates: Partial<TextSettings>) => void;
 
   /** Ajoute une image en conservant éventuellement id + transform (depuis un JSON). Renvoie l'id. */
   addCustomImage: (
-      zone: Zone,
-      url: string,
-      options?: { id?: string; transform?: ImageTransform }
+    zone: Zone,
+    url: string,
+    options?: { id?: string; transform?: ImageTransform }
   ) => string;
 
   removeCustomImage: (zone: Zone, imageId: string) => void;
@@ -114,6 +121,7 @@ const defaultColor: GloveColor = {
   name: 'Classic white',
   hex: '#FFFFFF',
   price: 0,
+  finish: 'standard',
 };
 
 const defaultTextSettings: TextSettings = {
@@ -146,6 +154,9 @@ const zones: Zone[] = [
   'Strap',
   'WristOutline',
 ];
+
+// Order of tabs used by the customizer UI
+const tabsOrder = ['colors', 'materials', 'size', 'text', 'images'];
 
 const initialGlove: CustomGlove = {
   id: uuidv4(),
@@ -191,6 +202,24 @@ const initialGlove: CustomGlove = {
 
 export const useCustomizationStore = create<CustomizationState>((set, get) => ({
   glove: initialGlove,
+
+  // UI tab state for the customizer
+  currentTab: 'colors',
+  setCurrentTab: (tab: string) => {
+    set(() => ({ currentTab: tab } as any));
+  },
+  nextTab: () => {
+    const current = get().currentTab || 'colors';
+    const idx = tabsOrder.indexOf(current);
+    const next = tabsOrder[Math.min(tabsOrder.length - 1, Math.max(0, idx + 1))] ?? tabsOrder[0];
+    set(() => ({ currentTab: next } as any));
+  },
+  prevTab: () => {
+    const current = get().currentTab || 'colors';
+    const idx = tabsOrder.indexOf(current);
+    const prev = tabsOrder[Math.max(0, idx - 1)] ?? tabsOrder[0];
+    set(() => ({ currentTab: prev } as any));
+  },
 
   textZones: {
     Wrist: { text: '', font: 'Arial', color: '#000000', size: 36, rotation: 90, x: 260, y: 360 },
@@ -287,7 +316,7 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
 
       if (zone === 'Strap') {
         updatedImages.WristOutline = state.customImages.WristOutline.map((img) =>
-            img.id === imageId ? { ...img, transform } : img
+          img.id === imageId ? { ...img, transform } : img
         );
       }
 
@@ -296,17 +325,39 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
   },
 
   resetCustomization: () => {
-    set({
-      glove: { ...initialGlove, id: uuidv4() },
-      textZones: zones.reduce((acc, zone) => {
-        acc[zone] = { ...defaultTextSettings };
-        return acc;
-      }, {} as Record<Zone, TextSettings>),
-      customImages: zones.reduce((acc, zone) => {
-        acc[zone] = [];
-        return acc;
-      }, {} as Record<Zone, CustomImage[]>),
-    });
+    console.log('[resetCustomization] Resetting colors to white...');
+    const state = get();
+    const newGlove: CustomGlove = {
+      id: state.glove.id,
+      basePrice: state.glove.basePrice,
+      customizationCost: 0,
+
+      // Reset all colors to default white
+      palmColor: { ...defaultColor },
+      thumbColor: { ...defaultColor },
+      mainColor: { ...defaultColor },
+      wristColor: { ...defaultColor },
+      laceColor: { ...defaultColor },
+      trimColor: { ...defaultColor },
+      fingersColor: { ...defaultColor },
+      innerPalmColor: { ...defaultColor },
+      outerPalmColor: { ...defaultColor },
+      innerThumbColor: { ...defaultColor },
+      outerThumbColor: { ...defaultColor },
+      strapColor: { ...defaultColor },
+      wristOutlineColor: { ...defaultColor },
+      outlineColor: { ...defaultColor },
+
+      // Keep these as they were
+      material: state.glove.material,
+      pattern: state.glove.pattern,
+      trim: state.glove.trim,
+      size: state.glove.size,
+      customTexts: state.glove.customTexts,
+      customImages: state.glove.customImages,
+    };
+    console.log('[resetCustomization] New glove state:', newGlove);
+    set({ glove: newGlove });
   },
 
   calculatePrice: () => {
@@ -335,8 +386,8 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
     total += glove.customTexts.length * 4.99;
 
     const totalImages = Object.entries(get().customImages)
-        .filter(([zone]) => zone !== 'WristOutline')
-        .reduce((sum, [, zoneImages]) => sum + zoneImages.length, 0);
+      .filter(([zone]) => zone !== 'WristOutline')
+      .reduce((sum, [, zoneImages]) => sum + zoneImages.length, 0);
     total += totalImages * 7.99;
 
     return total;
