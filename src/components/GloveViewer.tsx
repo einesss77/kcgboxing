@@ -168,7 +168,15 @@ function GloveViewer() {
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 1, 0);
     controls.enableDamping = true;
-    controls.enabled = false; // Disable OrbitControls, we handle rotation manually
+
+    // Enable zoom but disable rotation and pan (we handle rotation manually)
+    controls.enableZoom = true;
+    controls.enableRotate = false;
+    controls.enablePan = false;
+    controls.zoomSpeed = 1.0;
+    controls.minDistance = 2;
+    controls.maxDistance = 10;
+
     controls.update();
     controlsRef.current = controls;
 
