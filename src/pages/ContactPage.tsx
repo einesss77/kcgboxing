@@ -176,9 +176,7 @@ const ContactPage: React.FC = () => {
                     <div>
                       <h3 className="font-semibold mb-1">Our Location</h3>
                       <address className="text-neutral-400 not-italic">
-                        123 Boxing Lane<br />
-                        Fightville, CA 90210<br />
-                        United States
+                        Worldwide Shipping
                       </address>
                     </div>
                   </div>
@@ -188,10 +186,10 @@ const ContactPage: React.FC = () => {
                       <Phone className="h-6 w-6 text-red-500" />
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-1">Phone Number</h3>
+                      <h3 className="font-semibold mb-1">WhatsApp Contact </h3>
                       <p className="text-neutral-400">
                         <a href="tel:+18005559876" className="hover:text-red-500 transition-colors">
-                          +1 (800) 555-9876
+                          +971 50 308 5014
                         </a>
                       </p>
                     </div>
@@ -205,7 +203,7 @@ const ContactPage: React.FC = () => {
                       <h3 className="font-semibold mb-1">Email Address</h3>
                       <p className="text-neutral-400">
                         <a href="mailto:info@knockoutgloves.com" className="hover:text-red-500 transition-colors">
-                          info@knockoutgloves.com
+                          kcgboxing2@gmail.com
                         </a>
                       </p>
                     </div>

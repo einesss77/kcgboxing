@@ -176,7 +176,7 @@ const HomePage: React.FC = () => {
                   JM
                 </div>
                 <div>
-                  <h4 className="font-semibold">James Miller</h4>
+                  <h4 className="font-semibold">Kenzi Mcellem</h4>
                   <p className="text-neutral-400 text-sm">Professional Boxer</p>
                 </div>
               </div>
@@ -194,7 +194,7 @@ const HomePage: React.FC = () => {
                   SR
                 </div>
                 <div>
-                  <h4 className="font-semibold">Sarah Rodriguez</h4>
+                  <h4 className="font-semibold">Gustave Barronet</h4>
                   <p className="text-neutral-400 text-sm">MMA Fighter</p>
                 </div>
               </div>
@@ -212,7 +212,7 @@ const HomePage: React.FC = () => {
                   DT
                 </div>
                 <div>
-                  <h4 className="font-semibold">David Thompson</h4>
+                  <h4 className="font-semibold">Issa Amaar</h4>
                   <p className="text-neutral-400 text-sm">Boxing Coach</p>
                 </div>
               </div>

@@ -132,7 +132,7 @@ const AboutPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-neutral-800 rounded-xl p-6 text-center">
               <div className="w-24 h-24 rounded-full bg-neutral-700 mx-auto mb-4"></div>
-              <h3 className="text-xl font-semibold mb-1">Alex Rodriguez</h3>
+              <h3 className="text-xl font-semibold mb-1">Badis Zerguerras</h3>
               <p className="text-red-500 mb-3">Founder & CEO</p>
               <p className="text-neutral-400 text-sm">
                 Former pro boxer with 15 years of experience and a mission to revolutionize boxing equipment.
@@ -141,7 +141,7 @@ const AboutPage: React.FC = () => {
 
             <div className="bg-neutral-800 rounded-xl p-6 text-center">
               <div className="w-24 h-24 rounded-full bg-neutral-700 mx-auto mb-4"></div>
-              <h3 className="text-xl font-semibold mb-1">Sarah Chen</h3>
+              <h3 className="text-xl font-semibold mb-1">Rayan Nashwan</h3>
               <p className="text-red-500 mb-3">Head of Design</p>
               <p className="text-neutral-400 text-sm">
                 Industrial designer with expertise in performance equipment and a focus on ergonomics.
@@ -150,7 +150,7 @@ const AboutPage: React.FC = () => {
 
             <div className="bg-neutral-800 rounded-xl p-6 text-center">
               <div className="w-24 h-24 rounded-full bg-neutral-700 mx-auto mb-4"></div>
-              <h3 className="text-xl font-semibold mb-1">Marcus Johnson</h3>
+              <h3 className="text-xl font-semibold mb-1">Fares Fatheldin</h3>
               <p className="text-red-500 mb-3">Production Manager</p>
               <p className="text-neutral-400 text-sm">
                 With 20+ years in manufacturing sports equipment, Marcus ensures every glove meets our high standards.

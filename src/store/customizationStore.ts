@@ -227,8 +227,8 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
     OutterThumb: { text: '', font: 'Arial', color: '#000000', size: 70, rotation: 30, x: 180, y: 230 },
     InnerPalm: { text: '', font: 'Arial', color: '#000000', size: 36, rotation: 0, x: 200, y: 110 },
     OutterPalm: { text: '', font: 'Arial', color: '#000000', size: 32, rotation: 0, x: 350, y: 400 },
-    Strap: { text: '', font: 'Arial', color: '#000000', size: 32, rotation: 90, x: 110, y: 450 },
-    WristOutline: { text: '', font: 'Arial', color: '#000000', size: 64, rotation: 0, x: 256, y: 256 },
+    Strap: { text: '', font: 'Arial', color: '#000000', size: 28, rotation: 90, x: 281, y: 453 },
+    WristOutline: { text: '', font: 'Arial', color: '#000000', size: 28, rotation: 90, x: 281, y: 453 },
   },
 
   customImages: zones.reduce((acc, zone) => {

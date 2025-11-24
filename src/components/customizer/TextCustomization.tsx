@@ -1,11 +1,12 @@
 import { useCustomizationStore } from '../../store/customizationStore';
 
 const zones = [
-  'Wrist',
+  'OutterPalm',
+  'InnerPalm',
   'InnerThumb',
   'OutterThumb',
-  'InnerPalm',
-  'OutterPalm',
+  'Wrist',
+
   'Strap',
 ] as const;
 
@@ -16,11 +17,11 @@ export default function TextCustomization() {
 
   return (
     <div className="space-y-8">
-      {zones.map((zone) => { 
-        const settings = textZones[zone]; 
+      {zones.map((zone) => {
+        const settings = textZones[zone];
         return (
           <div
-            key={zone} 
+            key={zone}
             className="border border-neutral-700 rounded-xl p-4 bg-neutral-900"
           >
             <h3 className="text-lg font-semibold text-white mb-4">

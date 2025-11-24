@@ -18,44 +18,6 @@ export default function CustomizerPage() {
   const isFirstTab = currentIndex === 0;
   const isLastTab = currentIndex === tabsOrder.length - 1;
 
-  const handleBuy = async () => {
-    const { glove, textZones, customImages } = useCustomizationStore.getState();
-
-    const orderData = {
-      colors: {
-        fingers: glove.fingersColor,
-        innerPalm: glove.innerPalmColor,
-        outerPalm: glove.outerPalmColor,
-        innerThumb: glove.innerThumbColor,
-        outerThumb: glove.outerThumbColor,
-        strap: glove.strapColor,
-        wrist: glove.wristColor,
-        wristOutline: glove.wristOutlineColor,
-        outline: glove.outlineColor,
-      },
-      size: glove.size,
-      texts: textZones,
-      images: customImages,
-    };
-
-    try {
-      const res = await fetch('https://ton-backend.com/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData),
-      });
-
-      if (res.ok) {
-        alert('✅ Commande envoyée avec succès !');
-      } else {
-        alert('❌ Erreur lors de l’envoi de la commande.');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('❌ Erreur réseau.');
-    }
-  };
-
   const handleAddToCart = () => {
     const { glove, textZones, customImages, calculatePrice } = useCustomizationStore.getState();
 
@@ -82,7 +44,7 @@ export default function CustomizerPage() {
 
     console.log("🧤 Objet ajouté au panier :", JSON.stringify(item, null, 2));
     addCartItem(item);
-    alert('✅ Gant ajouté au panier !');
+    alert('✅ Glove added to cart !');
     navigate('/cart');
   };
 
@@ -191,13 +153,6 @@ export default function CustomizerPage() {
             className="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-lg font-bold text-lg transition"
           >
             Add to cart
-          </button>
-
-          <button
-            onClick={handleBuy}
-            className="w-full bg-green-600 hover:bg-green-500 text-white py-3 rounded-lg font-bold text-lg transition"
-          >
-            Order Now
           </button>
         </div>
       </div>
