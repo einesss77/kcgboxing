@@ -5,7 +5,7 @@ const zones = [
   'InnerPalm',
   'InnerThumb',
   'OutterThumb',
-  'Wrist',
+  //'Wrist',
 
   'Strap',
 ] as const;
