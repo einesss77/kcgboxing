@@ -8,7 +8,22 @@ export function loadCustomizationFromJson(
 ) {
     const { updateColor, updateSize, updateTextZone, addCustomImage } =
         useCustomizationStore.getState();
+    // 🔥 1) Vider les anciennes images avant de charger le nouveau JSON
+    useCustomizationStore.setState((state) => {
+        // On reconstruit un objet customImages avec les mêmes clés mais des tableaux vides
+        const emptyImages = Object.keys(state.customImages).reduce(
+            (acc, zone) => {
+                acc[zone as Zone] = [];
+                return acc;
+            },
+            {} as Record<Zone, CustomImage[]>
+        );
 
+        return {
+            ...state,
+            customImages: emptyImages,
+        };
+    });
     // Couleurs
     Object.entries(gloveData || {}).forEach(([key, value]) => {
         if (key.endsWith('Color') && value && typeof value === 'object') {
